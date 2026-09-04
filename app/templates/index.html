@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Freeze-Risk Guardian</title>
+<style>
+  :root {
+    --bg: #0d1117; --panel: #161b22; --border: #30363d;
+    --text: #e6edf3; --muted: #8b949e; --accent: #d29922;
+    --danger: #f85149; --safe: #3fb950; --blue: #58a6ff;
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: radial-gradient(ellipse 1200px 600px at 50% -10%, rgba(210,153,34,0.08), transparent), var(--bg);
+    color: var(--text);
+    font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+    margin: 0; padding: 32px 24px 100px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1200px; margin: 0 auto; }
+  h1 {
+    font-size: 1.7rem; margin-bottom: 4px; letter-spacing: -0.02em;
+    background: linear-gradient(135deg, #fff, #d29922 140%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .subtitle { color: var(--muted); margin-bottom: 8px; font-size: 0.95rem; }
+  .tabs { display: flex; gap: 4px; margin: 20px 0; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+  .tab-btn {
+    background: none; border: none; color: var(--muted); padding: 10px 14px;
+    cursor: pointer; font-size: 0.85rem; border-bottom: 2px solid transparent; white-space: nowrap;
+    transition: color 0.15s ease, border-color 0.15s ease;
+  }
+  .tab-btn:hover { color: var(--text); }
+  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .tab-panel { display: none; animation: fadeIn 0.25s ease; }
+  .tab-panel.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .panel {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 12px; padding: 20px; margin-bottom: 20px;
+    transition: border-color 0.2s ease;
+  }
+  .panel:hover { border-color: #3d444d; }
+  .panel h2 { color: var(--accent); text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.78rem; margin-top: 0; }
+  .metric-row { display: flex; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+  .metric-row:last-child { border-bottom: none; }
+  select, button, input[type=file], input[type=text] {
+    background: #21262d; color: var(--text); border: 1px solid var(--border);
+    border-radius: 7px; padding: 8px 12px; font-size: 0.9rem; cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
+  }
+  select:hover, input[type=file]:hover { border-color: #4d5560; }
+  input[type=text] { cursor: text; }
+  input[type=text]:focus, select:focus { outline: none; border-color: var(--accent); }
+  button.primary { background: linear-gradient(135deg, #e2a930, var(--accent)); color: #1a1400; border: none; font-weight: 600; }
+  button.primary:hover { opacity: 0.92; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(210,153,34,0.25); }
+  button.primary:active { transform: translateY(0); }
+  button.small { padding: 5px 10px; font-size: 0.78rem; }
+  .score-badge { display: inline-flex; align-items: center; gap: 10px; padding: 5px 14px; border-radius: 20px; font-weight: 700; font-size: 1.1rem; margin: 10px 0; }
+  .flagged { background: rgba(248,81,73,0.15); color: var(--danger); box-shadow: 0 0 0 1px rgba(248,81,73,0.2); }
+  .safe { background: rgba(63,185,80,0.15); color: var(--safe); box-shadow: 0 0 0 1px rgba(63,185,80,0.2); }
+  .grade-pill { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; font-weight: 800; font-size: 0.85rem; background: rgba(255,255,255,0.12); }
+  .factor-bar { background: #21262d; border-radius: 4px; height: 8px; margin: 4px 0 10px; overflow: hidden; }
+  .factor-fill { height: 100%; transition: width 0.4s ease; }
+  .fill-up { background: linear-gradient(90deg, #f85149, #ff6a63); }
+  .fill-down { background: linear-gradient(90deg, #3fb950, #56d364); }
+  ul.checklist { padding-left: 18px; }
+  ul.checklist li { margin-bottom: 6px; font-size: 0.9rem; }
+  .source-tag { font-size: 0.7rem; color: var(--muted); font-style: italic; }
+  pre.audit { background: #010409; padding: 12px; border-radius: 8px; max-height: 240px; overflow-y: auto; font-size: 0.75rem; }
+  .top-controls { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+  .slider-row { margin: 16px 0; }
+  input[type=range] { width: 100%; accent-color: var(--accent); }
+  .cm-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; margin-top: 12px; }
+  .cm-cell { padding: 16px; border-radius: 8px; text-align: center; font-size: 0.8rem; transition: transform 0.15s ease; }
+  .cm-cell:hover { transform: scale(1.02); }
+  .cm-tp { background: rgba(63,185,80,0.25); } .cm-tn { background: rgba(63,185,80,0.12); }
+  .cm-fp { background: rgba(248,81,73,0.25); } .cm-fn { background: rgba(248,81,73,0.4); }
+  .cm-val { font-size: 1.4rem; font-weight: 700; display: block; }
+  table.batch-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-top: 12px; }
+  table.batch-table th, table.batch-table td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--border); }
+  table.batch-table tr:hover td { background: rgba(255,255,255,0.02); }
+  .dist-bar-row { display: flex; align-items: center; gap: 8px; margin: 4px 0; font-size: 0.8rem; }
+  .dist-bar-track { flex: 1; background: #21262d; height: 14px; border-radius: 4px; overflow: hidden; }
+  .dist-bar-fill { height: 100%; background: linear-gradient(90deg, #b8860b, var(--accent)); transition: width 0.4s ease; }
+  .toggle-row { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--muted); }
+  .sim-slider-label { display: flex; justify-content: space-between; font-size: 0.8rem; margin-top: 10px; }
+  .sim-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .sim-checkbox-row { display: flex; align-items: center; gap: 8px; margin-top: 12px; font-size: 0.85rem; }
+  .compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
+  .compare-card { background: #0d1117; border: 1px solid var(--border); border-radius: 10px; padding: 14px; transition: border-color 0.2s ease; }
+  .compare-card:hover { border-color: var(--accent); }
+  .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; margin-right: 8px; vertical-align: -2px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  /* Chatbot widget */
+  #chat-fab {
+    position: fixed; bottom: 24px; right: 24px; width: 56px; height: 56px; border-radius: 50%;
+    background: linear-gradient(135deg, #e2a930, var(--accent)); color: #1a1400; border: none; font-size: 1.4rem; cursor: pointer;
+    box-shadow: 0 4px 20px rgba(210,153,34,0.35); z-index: 50; transition: transform 0.15s ease;
+  }
+  #chat-fab:hover { transform: scale(1.06); }
+  #chat-panel {
+    position: fixed; bottom: 92px; right: 24px; width: 360px; max-width: calc(100vw - 48px);
+    height: 460px; background: var(--panel); border: 1px solid var(--border); border-radius: 14px;
+    display: none; flex-direction: column; overflow: hidden; z-index: 50; box-shadow: 0 12px 40px rgba(0,0,0,0.55);
+    animation: fadeIn 0.2s ease;
+  }
+  #chat-panel.open { display: flex; }
+  #chat-header { padding: 12px 14px; border-bottom: 1px solid var(--border); font-size: 0.85rem; font-weight: 600; color: var(--accent); }
+  #chat-messages { flex: 1; overflow-y: auto; padding: 12px; font-size: 0.82rem; }
+  .chat-msg { margin-bottom: 10px; line-height: 1.45; }
+  .chat-msg.user { color: var(--text); text-align: right; }
+  .chat-msg.assistant { color: var(--text); }
+  .chat-msg .role-label { font-size: 0.68rem; color: var(--muted); display: block; margin-bottom: 2px; }
+  #chat-input-row { display: flex; gap: 6px; padding: 10px; border-top: 1px solid var(--border); }
+  #chat-input { flex: 1; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Freeze-Risk Guardian</h1>
+  <div class="subtitle">Predicting compliance-driven account holds before they happen — Razorpay AI Buildathon, Track 02</div>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="assess">🔍 Assess a Merchant</button>
+    <button class="tab-btn" data-tab="simulator">🎚 What-If Simulator</button>
+    <button class="tab-btn" data-tab="compare">⚖️ Compare Merchants</button>
+    <button class="tab-btn" data-tab="tradeoff">📊 Threshold Tradeoff</button>
+    <button class="tab-btn" data-tab="performance">📈 Model Performance</button>
+    <button class="tab-btn" data-tab="batch">📁 Batch Upload</button>
+    <button class="tab-btn" data-tab="impact">💰 Business Impact</button>
+    <button class="tab-btn" data-tab="audit">🧾 Audit Trail</button>
+  </div>
+
+  <!-- ASSESS -->
+  <div class="tab-panel active" id="tab-assess">
+    <div class="panel">
+      <h2>Assess a Merchant</h2>
+      <div class="top-controls">
+        <select id="merchant-select"><option>Loading sample merchants…</option></select>
+        <button class="primary" id="assess-btn">Assess Risk</button>
+        <label class="toggle-row"><input type="checkbox" id="style-toggle"> Technical explanation (for compliance team, not merchant)</label>
+      </div>
+      <div id="result"></div>
+      <button class="small" id="download-report-btn" style="display:none; margin-top:14px;">⬇ Download Report</button>
+    </div>
+  </div>
+
+  <!-- WHAT-IF SIMULATOR -->
+  <div class="tab-panel" id="tab-simulator">
+    <div class="panel">
+      <h2>What-If Simulator</h2>
+      <p style="color:var(--muted); font-size:0.85rem;">Drag any slider — the risk score updates live, before you'd even click "Assess." Note: maxing out every slider at once creates a merchant profile unlike anything in training data — random forests respond conservatively to combinations they've never seen together, which is honest model behavior, not a bug.</p>
+      <div class="score-badge" id="sim-badge" style="margin-top:10px;"><span id="sim-grade" class="grade-pill">-</span><span id="sim-score-text">Move a slider to begin</span></div>
+      <div class="sim-grid">
+        <div id="sim-sliders-left"></div>
+        <div id="sim-sliders-right"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- COMPARE -->
+  <div class="tab-panel" id="tab-compare">
+    <div class="panel">
+      <h2>Compare Merchants</h2>
+      <div class="top-controls">
+        <select id="compare-a"></select>
+        <span style="color:var(--muted);">vs</span>
+        <select id="compare-b"></select>
+        <button class="primary" id="compare-btn">Compare</button>
+      </div>
+      <div class="compare-grid" id="compare-result"></div>
+    </div>
+  </div>
+
+  <!-- TRADEOFF -->
+  <div class="tab-panel" id="tab-tradeoff">
+    <div class="panel">
+      <h2>Live Threshold Tradeoff</h2>
+      <p style="color:var(--muted); font-size:0.85rem;">A naive cost-minimization threshold flags ~98% of accounts — mathematically "optimal," operationally useless. Drag the slider to see why the deployed policy caps review volume instead.</p>
+      <div class="slider-row">
+        <input type="range" id="threshold-slider" min="0" max="90" value="45" step="1">
+        <div class="metric-row"><span>Threshold</span><strong id="th-value">-</strong></div>
+      </div>
+      <div class="grid">
+        <div>
+          <div class="metric-row"><span>Precision</span><strong id="th-precision">-</strong></div>
+          <div class="metric-row"><span>Recall</span><strong id="th-recall">-</strong></div>
+          <div class="metric-row"><span>F1</span><strong id="th-f1">-</strong></div>
+          <div class="metric-row"><span>Flag rate</span><strong id="th-flagrate">-</strong></div>
+          <div class="metric-row"><span>Estimated savings</span><strong id="th-savings">-</strong></div>
+        </div>
+        <div class="cm-grid" id="th-cm"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PERFORMANCE -->
+  <div class="tab-panel" id="tab-performance">
+    <div class="grid">
+      <div class="panel">
+        <h2>Deployed Model — Held-Out Test Set</h2>
+        <div id="metrics"></div>
+      </div>
+      <div class="panel">
+        <h2>ROC Curve (AUC <span id="roc-auc">-</span>)</h2>
+        <svg id="roc-svg" viewBox="0 0 300 300" width="100%" style="max-width:300px;"></svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- BATCH -->
+  <div class="tab-panel" id="tab-batch">
+    <div class="panel">
+      <h2>Batch Portfolio Assessment</h2>
+      <div class="top-controls">
+        <a href="/api/sample-batch-csv" style="color:var(--blue); font-size:0.85rem;">Download sample CSV</a>
+        <input type="file" id="batch-file" accept=".csv">
+        <button class="primary" id="batch-btn">Score Batch</button>
+        <button class="small" id="export-batch-btn" style="display:none;">⬇ Export Results CSV</button>
+      </div>
+      <div id="batch-result"></div>
+    </div>
+  </div>
+
+  <!-- AUDIT -->
+  <div class="tab-panel" id="tab-impact">
+    <div class="panel">
+      <h2>Business Impact Projection</h2>
+      <p style="color:var(--muted); font-size:0.85rem;">
+        Your test set proved this model catches real freeze risk on 1,500 accounts. This panel projects
+        that result to Razorpay's actual scale — <strong>you control the assumption</strong>, since the
+        real merchant base size and freeze-cost figures aren't public. This is honest extrapolation, not a claim.
+      </p>
+      <div class="top-controls" style="margin-top:16px;">
+        <label style="font-size:0.85rem; color:var(--muted);">Total merchant base:</label>
+        <input type="text" id="impact-merchant-base" value="100000" style="width:120px;">
+        <label style="font-size:0.85rem; color:var(--muted);">Review cycles per year:</label>
+        <input type="text" id="impact-cycles" value="12" style="width:60px;">
+        <button class="primary" id="impact-calc-btn">Project Impact</button>
+      </div>
+      <div id="impact-result" style="margin-top:20px;"></div>
+      <div class="panel" style="margin-top:16px; background:#0d1117;">
+        <h2 style="margin-top:0;">How this would actually integrate</h2>
+        <p style="font-size:0.85rem; line-height:1.6;">
+          This is a proposal, not a built integration: score the full merchant base as a nightly batch job
+          (reusing the exact <code>/api/batch-assess</code> endpoint already in this app), surface flagged
+          accounts to the compliance team's existing review queue, and re-run the What-If Simulator's logic
+          at KYC-document-update time so a merchant's risk score updates the moment they fix something —
+          closing the loop between "flagged" and "resolved" instead of leaving merchants guessing.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-panel" id="tab-audit">
+    <div class="panel">
+      <h2>Audit Trail (last predictions)</h2>
+      <pre class="audit" id="audit-log">Run an assessment to populate the audit trail…</pre>
+    </div>
+  </div>
+</div>
+
+<!-- AI Compliance Assistant -->
+<button id="chat-fab" title="Ask the AI Compliance Assistant">💬</button>
+<div id="chat-panel">
+  <div id="chat-header">AI Compliance Assistant</div>
+  <div id="chat-messages"></div>
+  <div id="chat-input-row">
+    <input type="text" id="chat-input" placeholder="Ask about the model or current merchant…">
+    <button class="primary small" id="chat-send-btn">Send</button>
+  </div>
+</div>
+
+<script>
+let sampleMerchants = [];
+let thresholdSweep = [];
+let lastAssessResult = null;
+let chatHistory = [];
+let lastBatchResults = null;
+
+const FEATURE_DEFS = [
+  {key:"kyc_completeness_score", label:"KYC Completeness Score", min:0, max:100, step:1, default:78},
+  {key:"kyc_doc_age_days", label:"KYC Doc Age (days)", min:0, max:1500, step:10, default:180},
+  {key:"days_since_onboarding", label:"Days Since Onboarding", min:5, max:3000, step:10, default:400},
+  {key:"monthly_txn_volume_inr", label:"Monthly Volume (₹)", min:5000, max:3000000, step:5000, default:300000},
+  {key:"volume_spike_ratio", label:"Volume Spike Ratio", min:0.5, max:6, step:0.1, default:1.0},
+  {key:"chargeback_ratio_pct", label:"Chargeback Ratio (%)", min:0, max:8, step:0.1, default:0.5},
+  {key:"refund_ratio_pct", label:"Refund Ratio (%)", min:0, max:25, step:0.5, default:2},
+  {key:"international_txn_share_pct", label:"International Txn Share (%)", min:0, max:100, step:1, default:10},
+  {key:"avg_ticket_size_inr", label:"Avg Ticket Size (₹)", min:50, max:20000, step:50, default:1000},
+  {key:"prior_risk_flags_count", label:"Prior Risk Flags", min:0, max:6, step:1, default:0},
+];
+
+// ---------- Tabs ----------
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+  });
+});
+
+function gradeColor(g) {
+  return {A:"#3fb950", B:"#7ee787", C:"#d29922", D:"#f0883e", F:"#f85149"}[g] || "#8b949e";
+}
+
+// ---------- Metrics / ROC ----------
+async function loadMetrics() {
+  const res = await fetch("/api/metrics");
+  const m = await res.json();
+  const rows = [
+    ["Deployed policy", m.deployed_policy],
+    ["Decision threshold", m.decision_threshold],
+    ["Precision", (m.precision * 100).toFixed(1) + "%"],
+    ["Recall", (m.recall * 100).toFixed(1) + "%"],
+    ["F1", m.f1],
+    ["ROC-AUC", m.roc_auc],
+    ["Estimated savings (test set)", "₹" + m.estimated_cost_inr.estimated_savings_inr.toLocaleString("en-IN")],
+  ];
+  document.getElementById("metrics").innerHTML = rows.map(
+    ([k, v]) => `<div class="metric-row"><span>${k}</span><strong>${v}</strong></div>`
+  ).join("");
+}
+
+async function loadRoc() {
+  const res = await fetch("/api/roc-curve");
+  const roc = await res.json();
+  document.getElementById("roc-auc").textContent = roc.auc;
+  const svg = document.getElementById("roc-svg");
+  const pad = 30, size = 300 - pad * 2;
+  let path = `M ${pad} ${pad + size}`;
+  roc.fpr.forEach((fpr, i) => {
+    const x = pad + fpr * size;
+    const y = pad + size - roc.tpr[i] * size;
+    path += ` L ${x.toFixed(1)} ${y.toFixed(1)}`;
+  });
+  svg.innerHTML = `
+    <line x1="${pad}" y1="${pad}" x2="${pad}" y2="${pad+size}" stroke="#30363d"/>
+    <line x1="${pad}" y1="${pad+size}" x2="${pad+size}" y2="${pad+size}" stroke="#30363d"/>
+    <line x1="${pad}" y1="${pad+size}" x2="${pad+size}" y2="${pad}" stroke="#30363d" stroke-dasharray="4,4"/>
+    <path d="${path}" fill="none" stroke="#d29922" stroke-width="2"/>
+    <text x="${pad}" y="${pad+size+18}" fill="#8b949e" font-size="10">FPR →</text>
+    <text x="4" y="${pad}" fill="#8b949e" font-size="10">TPR</text>
+  `;
+}
+
+// ---------- Threshold sweep ----------
+async function loadThresholdSweep() {
+  const res = await fetch("/api/threshold-sweep");
+  const data = await res.json();
+  thresholdSweep = data.sweep;
+  const slider = document.getElementById("threshold-slider");
+  const deployedIdx = thresholdSweep.findIndex(p => Math.abs(p.threshold - data.deployed_threshold) < 0.01);
+  slider.max = thresholdSweep.length - 1;
+  slider.value = deployedIdx >= 0 ? deployedIdx : 45;
+  renderThresholdPoint();
+}
+
+function renderThresholdPoint() {
+  const idx = parseInt(document.getElementById("threshold-slider").value);
+  const p = thresholdSweep[Math.min(idx, thresholdSweep.length - 1)];
+  if (!p) return;
+  document.getElementById("th-value").textContent = p.threshold;
+  document.getElementById("th-precision").textContent = (p.precision * 100).toFixed(1) + "%";
+  document.getElementById("th-recall").textContent = (p.recall * 100).toFixed(1) + "%";
+  document.getElementById("th-f1").textContent = p.f1;
+  document.getElementById("th-flagrate").textContent = (p.flag_rate * 100).toFixed(1) + "%";
+  document.getElementById("th-savings").textContent = "₹" + p.savings_vs_no_detection_inr.toLocaleString("en-IN");
+  document.getElementById("th-cm").innerHTML = `
+    <div class="cm-cell cm-tp"><span class="cm-val">${p.tp}</span>True Positive</div>
+    <div class="cm-cell cm-fp"><span class="cm-val">${p.fp}</span>False Positive</div>
+    <div class="cm-cell cm-fn"><span class="cm-val">${p.fn}</span>False Negative</div>
+    <div class="cm-cell cm-tn"><span class="cm-val">${p.tn}</span>True Negative</div>
+  `;
+}
+document.getElementById("threshold-slider").addEventListener("input", renderThresholdPoint);
+
+// ---------- Sample merchants ----------
+async function loadSampleMerchants() {
+  const res = await fetch("/api/sample-merchants");
+  sampleMerchants = await res.json();
+  const opts = sampleMerchants.map(
+    (m, i) => `<option value="${i}">${m.merchant_id} — ${m.freeze_risk_label ? "(known risky)" : "(known safe)"}</option>`
+  ).join("");
+  document.getElementById("merchant-select").innerHTML = opts;
+  document.getElementById("compare-a").innerHTML = opts;
+  document.getElementById("compare-b").innerHTML = opts;
+  document.getElementById("compare-b").selectedIndex = sampleMerchants.length - 1;
+}
+
+// ---------- Assess ----------
+async function assess() {
+  const idx = document.getElementById("merchant-select").value;
+  const merchant = sampleMerchants[idx];
+  const style = document.getElementById("style-toggle").checked ? "technical" : "plain";
+  const resultEl = document.getElementById("result");
+  resultEl.innerHTML = "<span class='spinner'></span><em>Scoring…</em>";
+  document.getElementById("download-report-btn").style.display = "none";
+
+  const res = await fetch("/api/assess", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({...merchant, style}),
+  });
+  const data = await res.json();
+  lastAssessResult = data;
+
+  const badgeClass = data.flagged ? "flagged" : "safe";
+  const badgeText = data.flagged ? "ELEVATED RISK" : "NORMAL RANGE";
+
+  let html = `<div class="score-badge ${badgeClass}">
+                <span class="grade-pill" style="background:${gradeColor(data.grade)}22; color:${gradeColor(data.grade)};">${data.grade}</span>
+                ${badgeText} — ${(data.risk_score*100).toFixed(1)}%
+              </div>`;
+  html += `<p>${data.explanation}</p>`;
+  if (data.checklist && data.checklist.length) {
+    html += "<strong>Recommended actions:</strong><ul class='checklist'>" +
+      data.checklist.map(c => `<li>${c}</li>`).join("") + "</ul>";
+  }
+  html += `<div class="source-tag">explanation: ${data.explanation_source} (${data.style}) · local attribution: ${data.local_explain_source}</div>`;
+  html += "<strong style='display:block;margin-top:12px;'>Why THIS merchant specifically:</strong>";
+  data.top_factors.forEach(f => {
+    const cls = f.contribution > 0 ? "fill-up" : "fill-down";
+    const widthPct = Math.min(100, Math.abs(f.contribution) * 400);
+    html += `<div style="font-size:0.8rem; display:flex; justify-content:space-between;">
+               <span>${f.feature} = ${f.value}</span><span>${f.direction} (${f.contribution >= 0 ? '+' : ''}${f.contribution})</span>
+             </div>
+             <div class="factor-bar"><div class="factor-fill ${cls}" style="width:${widthPct}%"></div></div>`;
+  });
+  resultEl.innerHTML = html;
+  document.getElementById("download-report-btn").style.display = "inline-block";
+  loadAuditLog();
+}
+document.getElementById("assess-btn").addEventListener("click", assess);
+
+document.getElementById("download-report-btn").addEventListener("click", () => {
+  if (!lastAssessResult) return;
+  const d = lastAssessResult;
+  const lines = [
+    `FREEZE-RISK GUARDIAN — COMPLIANCE READINESS REPORT`,
+    `Merchant: ${d.merchant_id}`,
+    `Generated: ${new Date().toLocaleString()}`,
+    ``,
+    `Risk Score: ${(d.risk_score*100).toFixed(1)}%  (Grade ${d.grade})`,
+    `Status: ${d.flagged ? "ELEVATED RISK" : "NORMAL RANGE"}`,
+    ``,
+    `Explanation:`,
+    d.explanation,
+    ``,
+    `Recommended Actions:`,
+    ...(d.checklist || []).map(c => `- ${c}`),
+    ``,
+    `Contributing Factors:`,
+    ...d.top_factors.map(f => `- ${f.feature} = ${f.value} (${f.direction}, ${f.contribution >= 0 ? '+' : ''}${f.contribution})`),
+    ``,
+    `--`,
+    `Generated by Freeze-Risk Guardian | Razorpay AI Buildathon Track 02`,
+  ];
+  const blob = new Blob([lines.join("\n")], {type: "text/plain"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `${d.merchant_id}_risk_report.txt`;
+  a.click();
+});
+
+// ---------- What-If Simulator ----------
+function buildSimulator() {
+  const leftEl = document.getElementById("sim-sliders-left");
+  const rightEl = document.getElementById("sim-sliders-right");
+  FEATURE_DEFS.forEach((f, i) => {
+    const target = i < 5 ? leftEl : rightEl;
+    const div = document.createElement("div");
+    div.innerHTML = `
+      <div class="sim-slider-label"><span>${f.label}</span><span id="sim-val-${f.key}">${f.default}</span></div>
+      <input type="range" id="sim-${f.key}" min="${f.min}" max="${f.max}" step="${f.step}" value="${f.default}">
+    `;
+    target.appendChild(div);
+  });
+  const flagsDiv = document.createElement("div");
+  flagsDiv.innerHTML = `
+    <div class="sim-checkbox-row"><input type="checkbox" id="sim-high_risk_category_flag"> High-risk merchant category</div>
+    <div class="sim-checkbox-row"><input type="checkbox" id="sim-geo_mismatch_flag"> Geography mismatch</div>
+  `;
+  rightEl.appendChild(flagsDiv);
+
+  const debounced = debounce(runSimulation, 150);
+  FEATURE_DEFS.forEach(f => {
+    document.getElementById(`sim-${f.key}`).addEventListener("input", (e) => {
+      document.getElementById(`sim-val-${f.key}`).textContent = e.target.value;
+      debounced();
+    });
+  });
+  document.getElementById("sim-high_risk_category_flag").addEventListener("change", debounced);
+  document.getElementById("sim-geo_mismatch_flag").addEventListener("change", debounced);
+}
+
+function debounce(fn, ms) {
+  let t;
+  return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
+}
+
+async function runSimulation() {
+  const values = {};
+  FEATURE_DEFS.forEach(f => { values[f.key] = parseFloat(document.getElementById(`sim-${f.key}`).value); });
+  values.high_risk_category_flag = document.getElementById("sim-high_risk_category_flag").checked ? 1 : 0;
+  values.geo_mismatch_flag = document.getElementById("sim-geo_mismatch_flag").checked ? 1 : 0;
+
+  const res = await fetch("/api/quick-score", {
+    method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(values),
+  });
+  const data = await res.json();
+  const badge = document.getElementById("sim-badge");
+  badge.className = "score-badge " + (data.flagged ? "flagged" : "safe");
+  document.getElementById("sim-grade").style.background = gradeColor(data.grade) + "22";
+  document.getElementById("sim-grade").style.color = gradeColor(data.grade);
+  document.getElementById("sim-grade").textContent = data.grade;
+  document.getElementById("sim-score-text").textContent =
+    `${data.flagged ? "ELEVATED RISK" : "NORMAL RANGE"} — ${(data.risk_score*100).toFixed(1)}%`;
+}
+
+// ---------- Compare ----------
+async function compareMerchants() {
+  const a = sampleMerchants[document.getElementById("compare-a").value];
+  const b = sampleMerchants[document.getElementById("compare-b").value];
+  const resEl = document.getElementById("compare-result");
+  resEl.innerHTML = "<em>Scoring both…</em>";
+
+  const [ra, rb] = await Promise.all([
+    fetch("/api/quick-score", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(a)}).then(r=>r.json()),
+    fetch("/api/quick-score", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(b)}).then(r=>r.json()),
+  ]);
+
+  function card(m, r) {
+    return `<div class="compare-card">
+      <strong>${m.merchant_id}</strong>
+      <div class="score-badge ${r.flagged ? 'flagged' : 'safe'}" style="margin-top:8px;">
+        <span class="grade-pill" style="background:${gradeColor(r.grade)}22; color:${gradeColor(r.grade)};">${r.grade}</span>
+        ${(r.risk_score*100).toFixed(1)}%
+      </div>
+      <div class="metric-row"><span>KYC completeness</span><strong>${m.kyc_completeness_score.toFixed(1)}</strong></div>
+      <div class="metric-row"><span>Chargeback ratio</span><strong>${m.chargeback_ratio_pct.toFixed(2)}%</strong></div>
+      <div class="metric-row"><span>Geo mismatch</span><strong>${m.geo_mismatch_flag ? "Yes" : "No"}</strong></div>
+      <div class="metric-row"><span>Prior flags</span><strong>${m.prior_risk_flags_count}</strong></div>
+    </div>`;
+  }
+  resEl.innerHTML = card(a, ra) + card(b, rb);
+}
+document.getElementById("compare-btn").addEventListener("click", compareMerchants);
+
+// ---------- Audit log ----------
+async function loadAuditLog() {
+  const res = await fetch("/api/audit-log");
+  const entries = await res.json();
+  document.getElementById("audit-log").textContent = entries.map(e => JSON.stringify(e)).join("\n") || "No entries yet.";
+}
+
+// ---------- Batch ----------
+async function runBatch() {
+  const fileInput = document.getElementById("batch-file");
+  const resultEl = document.getElementById("batch-result");
+  if (!fileInput.files.length) { resultEl.innerHTML = "<em>Choose a CSV first (or download the sample above).</em>"; return; }
+  resultEl.innerHTML = "<span class='spinner'></span><em>Scoring batch…</em>";
+  document.getElementById("export-batch-btn").style.display = "none";
+
+  const formData = new FormData();
+  formData.append("file", fileInput.files[0]);
+  const res = await fetch("/api/batch-assess", { method: "POST", body: formData });
+  const data = await res.json();
+  if (data.error) { resultEl.innerHTML = `<span style="color:var(--danger)">${data.error}</span>`; return; }
+  lastBatchResults = data.results;
+
+  const s = data.summary;
+  let html = `<div class="metric-row"><span>Total merchants</span><strong>${s.total_merchants}</strong></div>
+              <div class="metric-row"><span>Flagged</span><strong>${s.flagged_count} (${(s.flag_rate*100).toFixed(1)}%)</strong></div>
+              <div class="metric-row"><span>Average risk score</span><strong>${(s.avg_risk_score*100).toFixed(1)}%</strong></div>`;
+  html += "<div style='margin-top:14px;'><strong>Score distribution</strong>";
+  const maxCount = Math.max(...Object.values(s.score_distribution));
+  Object.entries(s.score_distribution).forEach(([bucket, count]) => {
+    html += `<div class="dist-bar-row"><span style="width:70px;">${bucket}</span>
+             <div class="dist-bar-track"><div class="dist-bar-fill" style="width:${(count/maxCount*100)||0}%"></div></div>
+             <span>${count}</span></div>`;
+  });
+  html += "</div>";
+
+  html += "<table class='batch-table'><tr><th>Merchant</th><th>Risk Score</th><th>Flagged</th></tr>" +
+    data.results.slice(0, 15).map(r => `<tr><td>${r.merchant_id || '-'}</td><td>${(r.risk_score*100).toFixed(1)}%</td><td>${r.flagged ? 'Yes' : 'No'}</td></tr>`).join("") +
+    "</table>";
+
+  resultEl.innerHTML = html;
+  document.getElementById("export-batch-btn").style.display = "inline-block";
+}
+document.getElementById("batch-btn").addEventListener("click", runBatch);
+
+document.getElementById("export-batch-btn").addEventListener("click", () => {
+  if (!lastBatchResults) return;
+  const header = "merchant_id,risk_score,flagged";
+  const rows = lastBatchResults.map(r => `${r.merchant_id || ''},${r.risk_score},${r.flagged}`);
+  const csv = [header, ...rows].join("\n");
+  const blob = new Blob([csv], {type: "text/csv"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "batch_risk_results.csv";
+  a.click();
+});
+
+// ---------- Chatbot ----------
+document.getElementById("chat-fab").addEventListener("click", () => {
+  document.getElementById("chat-panel").classList.toggle("open");
+});
+
+function appendChatMessage(role, text) {
+  const el = document.getElementById("chat-messages");
+  const div = document.createElement("div");
+  div.className = "chat-msg " + role;
+  div.innerHTML = `<span class="role-label">${role === 'user' ? 'You' : 'Assistant'}</span>${text}`;
+  el.appendChild(div);
+  el.scrollTop = el.scrollHeight;
+}
+
+async function sendChatMessage() {
+  const input = document.getElementById("chat-input");
+  const message = input.value.trim();
+  if (!message) return;
+  input.value = "";
+  appendChatMessage("user", message);
+  chatHistory.push({role: "user", content: message});
+  appendChatMessage("assistant", "…thinking…");
+
+  const currentMerchant = lastAssessResult ? {
+    merchant_id: lastAssessResult.merchant_id,
+    risk_score: lastAssessResult.risk_score,
+    flagged: lastAssessResult.flagged,
+    top_factors_summary: lastAssessResult.top_factors.map(f => f.feature).join(", "),
+  } : null;
+
+  const res = await fetch("/api/chat", {
+    method: "POST", headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({message, history: chatHistory.slice(0, -1), current_merchant: currentMerchant}),
+  });
+  const data = await res.json();
+  document.getElementById("chat-messages").lastChild.remove();
+  appendChatMessage("assistant", data.reply);
+  chatHistory.push({role: "assistant", content: data.reply});
+}
+document.getElementById("chat-send-btn").addEventListener("click", sendChatMessage);
+document.getElementById("chat-input").addEventListener("keydown", (e) => { if (e.key === "Enter") sendChatMessage(); });
+
+// ---------- Business Impact ----------
+async function calcImpact() {
+  const base = parseFloat(document.getElementById("impact-merchant-base").value) || 0;
+  const cycles = parseFloat(document.getElementById("impact-cycles").value) || 1;
+  const resEl = document.getElementById("impact-result");
+  if (base <= 0) { resEl.innerHTML = "<em>Enter a merchant base greater than 0.</em>"; return; }
+
+  const res = await fetch("/api/metrics");
+  const m = await res.json();
+  const testSize = m.test_set_size;
+  const perAccountSavings = m.estimated_cost_inr.estimated_savings_inr / testSize;
+  const perCycleSavings = perAccountSavings * base;
+  const annualSavings = perCycleSavings * cycles;
+  const flaggedPerCycle = Math.round(base * 0.15); // deployed 15% capacity policy
+
+  resEl.innerHTML = `
+    <div class="metric-row"><span>Accounts reviewed per cycle (15% capacity)</span><strong>${flaggedPerCycle.toLocaleString('en-IN')}</strong></div>
+    <div class="metric-row"><span>Projected savings per review cycle</span><strong>₹${Math.round(perCycleSavings).toLocaleString('en-IN')}</strong></div>
+    <div class="metric-row"><span>Projected savings per year (${cycles} cycles)</span><strong style="color:var(--safe);">₹${Math.round(annualSavings).toLocaleString('en-IN')}</strong></div>
+    <div class="metric-row"><span>Basis</span><strong>Linear extrapolation from ${testSize.toLocaleString('en-IN')}-account test set</strong></div>
+    <div class="source-tag" style="display:block; margin-top:10px;">Assumptions you control: merchant base size and cycle frequency above. Everything else is derived directly from the held-out test set metrics — no invented numbers.</div>
+  `;
+}
+document.getElementById("impact-calc-btn").addEventListener("click", calcImpact);
+
+// ---------- Init ----------
+loadMetrics();
+loadRoc();
+loadThresholdSweep();
+loadSampleMerchants();
+loadAuditLog();
+buildSimulator();
+appendChatMessage("assistant", "Hi! Ask me anything about the model — e.g. \"why is precision only 26%?\" or \"what happens if we review 25% of accounts instead of 15%?\"");
+</script>
+</body>
+</html>
