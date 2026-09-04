@@ -24,20 +24,22 @@
     -webkit-background-clip: text; background-clip: text; color: transparent;
   }
   .subtitle { color: var(--muted); margin-bottom: 8px; font-size: 0.95rem; }
+  .tabs-label {
+    font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted);
+    margin: 6px 0 6px 2px; font-weight: 600;
+  }
+  .tabs-group:first-of-type .tabs-label { margin-top: 4px; }
   .tabs {
-    display: flex; gap: 4px; margin: 20px 0; border-bottom: 1px solid var(--border);
-    flex-wrap: nowrap; overflow-x: auto; scrollbar-width: thin; scrollbar-color: var(--border) transparent;
-    -webkit-overflow-scrolling: touch; position: relative;
+    display: flex; gap: 4px; margin: 0 0 4px 0; flex-wrap: wrap;
   }
-  .tabs::-webkit-scrollbar { height: 5px; }
-  .tabs::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-  .tabs::-webkit-scrollbar-track { background: transparent; }
+  .tabs-group:last-of-type .tabs { border-bottom: 1px solid var(--border); padding-bottom: 4px; margin-bottom: 20px; }
   .tab-btn {
-    background: none; border: none; color: var(--muted); padding: 10px 12px;
+    background: none; border: none; color: var(--muted); padding: 9px 13px;
     cursor: pointer; font-size: 0.82rem; border-bottom: 2px solid transparent; white-space: nowrap;
-    flex-shrink: 0;
-    transition: color 0.15s ease, border-color 0.15s ease;
+    border-radius: 6px 6px 0 0;
+    transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
   }
+  .tab-btn:hover { color: var(--text); background: rgba(13,148,251,0.06); }
   .tab-btn:hover { color: var(--text); }
   .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
   .tab-panel { display: none; animation: fadeIn 0.25s ease; }
@@ -153,16 +155,24 @@
   <h1>Freeze-Risk Guardian</h1>
   <div class="subtitle">Predicting compliance-driven account holds before they happen — Razorpay AI Buildathon, Track 02</div>
 
-  <div class="tabs">
-    <button class="tab-btn active" data-tab="assess">🔍 Assess a Merchant</button>
-    <button class="tab-btn" data-tab="simulator">🎚 What-If Simulator</button>
-    <button class="tab-btn" data-tab="compare">⚖️ Compare Merchants</button>
-    <button class="tab-btn" data-tab="tradeoff">📊 Threshold Tradeoff</button>
-    <button class="tab-btn" data-tab="performance">📈 Model Performance</button>
-    <button class="tab-btn" data-tab="fairness">🎯 Fairness Check</button>
-    <button class="tab-btn" data-tab="batch">📁 Batch Upload</button>
-    <button class="tab-btn" data-tab="impact">💰 Business Impact</button>
-    <button class="tab-btn" data-tab="audit">🧾 Audit Trail</button>
+  <div class="tabs-group">
+    <div class="tabs-label">Workflow</div>
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="assess">🔍 Assess a Merchant</button>
+      <button class="tab-btn" data-tab="simulator">🎚 What-If Simulator</button>
+      <button class="tab-btn" data-tab="compare">⚖️ Compare Merchants</button>
+      <button class="tab-btn" data-tab="batch">📁 Batch Upload</button>
+    </div>
+  </div>
+  <div class="tabs-group">
+    <div class="tabs-label">Model Insights</div>
+    <div class="tabs">
+      <button class="tab-btn" data-tab="tradeoff">📊 Threshold Tradeoff</button>
+      <button class="tab-btn" data-tab="performance">📈 Model Performance</button>
+      <button class="tab-btn" data-tab="fairness">🎯 Fairness Check</button>
+      <button class="tab-btn" data-tab="impact">💰 Business Impact</button>
+      <button class="tab-btn" data-tab="audit">🧾 Audit Trail</button>
+    </div>
   </div>
 
   <!-- ASSESS -->
