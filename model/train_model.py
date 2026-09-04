@@ -31,6 +31,7 @@ MODEL_PATH = os.path.join(_BASE_DIR, "model", "freeze_risk_model.joblib")
 METRICS_PATH = os.path.join(_BASE_DIR, "model", "metrics.json")
 ROC_PATH = os.path.join(_BASE_DIR, "model", "roc_curve.json")
 SWEEP_PATH = os.path.join(_BASE_DIR, "model", "threshold_sweep.json")
+FAIRNESS_PATH = os.path.join(_BASE_DIR, "model", "fairness_check.json")
 
 FEATURES = [
     "kyc_completeness_score", "kyc_doc_age_days", "days_since_onboarding",
@@ -91,6 +92,70 @@ def main():
     best_threshold = capacity_threshold
 
     y_pred = (y_proba >= best_threshold).astype(int)
+
+    # --- Fairness / segment-level check ---------------------------------
+    # Does the model flag some merchant segments more than their actual risk
+    # justifies? Compare flag rate vs. real freeze-risk rate within each
+    # segment on the held-out test set -- a ratio near 1.0 means proportional
+    # targeting; far from 1.0 flags a segment worth a second look.
+    def _segment_stats(mask):
+        n = int(mask.sum())
+        if n == 0:
+            return {"n": 0, "actual_risk_rate": None, "flag_rate": None,
+                    "precision": None, "recall": None, "ratio": None}
+        y_t = y_test.values[mask]
+        y_p = y_pred[mask]
+        actual_rate = float(y_t.mean())
+        flag_rate = float(y_p.mean())
+        tp_s = int(((y_p == 1) & (y_t == 1)).sum())
+        fp_s = int(((y_p == 1) & (y_t == 0)).sum())
+        fn_s = int(((y_p == 0) & (y_t == 1)).sum())
+        precision_s = round(tp_s / (tp_s + fp_s), 4) if (tp_s + fp_s) > 0 else None
+        recall_s = round(tp_s / (tp_s + fn_s), 4) if (tp_s + fn_s) > 0 else None
+        ratio = round(flag_rate / actual_rate, 2) if actual_rate > 0 else None
+        return {
+            "n": n, "actual_risk_rate": round(actual_rate, 4), "flag_rate": round(flag_rate, 4),
+            "precision": precision_s, "recall": recall_s, "ratio": ratio,
+        }
+
+    intl = X_test["international_txn_share_pct"]
+    fairness_segments = [
+        {
+            "name": "Merchant category risk tier",
+            "groups": [
+                {"label": "Standard category", **_segment_stats((X_test["high_risk_category_flag"] == 0).values)},
+                {"label": "High-risk category", **_segment_stats((X_test["high_risk_category_flag"] == 1).values)},
+            ],
+        },
+        {
+            "name": "Geography mismatch",
+            "groups": [
+                {"label": "No geo mismatch", **_segment_stats((X_test["geo_mismatch_flag"] == 0).values)},
+                {"label": "Geo mismatch present", **_segment_stats((X_test["geo_mismatch_flag"] == 1).values)},
+            ],
+        },
+        {
+            "name": "International transaction share",
+            "groups": [
+                {"label": "Low (<10%)", **_segment_stats((intl < 10).values)},
+                {"label": "Medium (10-30%)", **_segment_stats(((intl >= 10) & (intl < 30)).values)},
+                {"label": "High (30%+)", **_segment_stats((intl >= 30).values)},
+            ],
+        },
+    ]
+    fairness_data = {
+        "methodology": (
+            "For each segment, we compare the model's flag rate (at the deployed 15%-capacity "
+            "threshold) against the actual freeze-risk rate in that segment on the held-out test "
+            "set. The 'ratio' column is flag_rate / actual_risk_rate -- close to 1.0 means the "
+            "model is flagging that segment proportionally to its real risk, not over- or "
+            "under-targeting it. Small subgroup sizes (n) make ratios noisier -- read with that "
+            "in mind rather than treating small deviations as proof of bias."
+        ),
+        "segments": fairness_segments,
+    }
+    with open(FAIRNESS_PATH, "w") as f:
+        json.dump(fairness_data, f, indent=2)
 
     precision = precision_score(y_test, y_pred)
     recall = recall_score(y_test, y_pred)
@@ -177,6 +242,7 @@ def main():
     print(f"Model saved to {MODEL_PATH}")
     print(f"ROC curve saved to {ROC_PATH}")
     print(f"Threshold sweep ({len(sweep)} points) saved to {SWEEP_PATH}")
+    print(f"Fairness check saved to {FAIRNESS_PATH}")
 
 
 if __name__ == "__main__":

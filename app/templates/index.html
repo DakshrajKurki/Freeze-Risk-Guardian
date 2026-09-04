@@ -5,13 +5,13 @@
 <title>Freeze-Risk Guardian</title>
 <style>
   :root {
-    --bg: #0d1117; --panel: #161b22; --border: #30363d;
-    --text: #e6edf3; --muted: #8b949e; --accent: #d29922;
-    --danger: #f85149; --safe: #3fb950; --blue: #58a6ff;
+    --bg: #06090f; --panel: #0e1420; --border: #1e2937;
+    --text: #e6edf3; --muted: #8b949e; --accent: #0d94fb;
+    --accent-dark: #0c2651; --danger: #f85149; --safe: #3fb950; --blue: #0d94fb;
   }
   * { box-sizing: border-box; }
   body {
-    background: radial-gradient(ellipse 1200px 600px at 50% -10%, rgba(210,153,34,0.08), transparent), var(--bg);
+    background: radial-gradient(ellipse 1200px 600px at 50% -10%, rgba(13,148,251,0.10), transparent), var(--bg);
     color: var(--text);
     font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
     margin: 0; padding: 32px 24px 100px;
@@ -20,7 +20,7 @@
   .wrap { max-width: 1200px; margin: 0 auto; }
   h1 {
     font-size: 1.7rem; margin-bottom: 4px; letter-spacing: -0.02em;
-    background: linear-gradient(135deg, #fff, #d29922 140%);
+    background: linear-gradient(135deg, #fff, #0d94fb 140%);
     -webkit-background-clip: text; background-clip: text; color: transparent;
   }
   .subtitle { color: var(--muted); margin-bottom: 8px; font-size: 0.95rem; }
@@ -37,74 +37,97 @@
   @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
   .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
   .panel {
-    background: var(--panel); border: 1px solid var(--border);
+    background: rgba(14,20,32,0.85); border: 1px solid var(--border);
     border-radius: 12px; padding: 20px; margin-bottom: 20px;
-    transition: border-color 0.2s ease;
+    transition: border-color 0.2s ease, background 0.2s ease;
   }
-  .panel:hover { border-color: #3d444d; }
+  .panel:hover { border-color: #2d4a6b; background: rgba(18,26,40,0.92); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
   .panel h2 { color: var(--accent); text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.78rem; margin-top: 0; }
-  .metric-row { display: flex; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+  .metric-row { display: flex; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid var(--border); font-size: 0.9rem; font-variant-numeric: tabular-nums; }
   .metric-row:last-child { border-bottom: none; }
   select, button, input[type=file], input[type=text] {
-    background: #21262d; color: var(--text); border: 1px solid var(--border);
+    background: #141b28; color: var(--text); border: 1px solid var(--border);
     border-radius: 7px; padding: 8px 12px; font-size: 0.9rem; cursor: pointer;
     transition: border-color 0.15s ease, background 0.15s ease;
   }
-  select:hover, input[type=file]:hover { border-color: #4d5560; }
+  select:hover, input[type=file]:hover { border-color: #3a5578; }
   input[type=text] { cursor: text; }
   input[type=text]:focus, select:focus { outline: none; border-color: var(--accent); }
-  button.primary { background: linear-gradient(135deg, #e2a930, var(--accent)); color: #1a1400; border: none; font-weight: 600; }
-  button.primary:hover { opacity: 0.92; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(210,153,34,0.25); }
+  button.primary { background: linear-gradient(135deg, #3aa8ff, var(--accent)); color: #04101f; border: none; font-weight: 600; }
+  button.primary:hover { opacity: 0.92; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(13,148,251,0.3); }
   button.primary:active { transform: translateY(0); }
   button.small { padding: 5px 10px; font-size: 0.78rem; }
-  .score-badge { display: inline-flex; align-items: center; gap: 10px; padding: 5px 14px; border-radius: 20px; font-weight: 700; font-size: 1.1rem; margin: 10px 0; }
+  .score-badge { display: inline-flex; align-items: center; gap: 10px; padding: 5px 14px; border-radius: 20px; font-weight: 700; font-size: 1.1rem; margin: 10px 0; font-variant-numeric: tabular-nums; }
   .flagged { background: rgba(248,81,73,0.15); color: var(--danger); box-shadow: 0 0 0 1px rgba(248,81,73,0.2); }
   .safe { background: rgba(63,185,80,0.15); color: var(--safe); box-shadow: 0 0 0 1px rgba(63,185,80,0.2); }
   .grade-pill { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; font-weight: 800; font-size: 0.85rem; background: rgba(255,255,255,0.12); }
-  .factor-bar { background: #21262d; border-radius: 4px; height: 8px; margin: 4px 0 10px; overflow: hidden; }
+  .factor-bar { background: #141b28; border-radius: 4px; height: 8px; margin: 4px 0 10px; overflow: hidden; }
   .factor-fill { height: 100%; transition: width 0.4s ease; }
   .fill-up { background: linear-gradient(90deg, #f85149, #ff6a63); }
   .fill-down { background: linear-gradient(90deg, #3fb950, #56d364); }
   ul.checklist { padding-left: 18px; }
   ul.checklist li { margin-bottom: 6px; font-size: 0.9rem; }
   .source-tag { font-size: 0.7rem; color: var(--muted); font-style: italic; }
-  pre.audit { background: #010409; padding: 12px; border-radius: 8px; max-height: 240px; overflow-y: auto; font-size: 0.75rem; }
+  pre.audit { background: #010409; padding: 12px; border-radius: 8px; max-height: 240px; overflow-y: auto; font-size: 0.75rem; font-family: "SF Mono", Menlo, monospace; }
   .top-controls { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
   .slider-row { margin: 16px 0; }
   input[type=range] { width: 100%; accent-color: var(--accent); }
   .cm-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; margin-top: 12px; }
-  .cm-cell { padding: 16px; border-radius: 8px; text-align: center; font-size: 0.8rem; transition: transform 0.15s ease; }
+  .cm-cell { padding: 16px; border-radius: 8px; text-align: center; font-size: 0.8rem; transition: transform 0.15s ease; font-variant-numeric: tabular-nums; }
   .cm-cell:hover { transform: scale(1.02); }
   .cm-tp { background: rgba(63,185,80,0.25); } .cm-tn { background: rgba(63,185,80,0.12); }
   .cm-fp { background: rgba(248,81,73,0.25); } .cm-fn { background: rgba(248,81,73,0.4); }
   .cm-val { font-size: 1.4rem; font-weight: 700; display: block; }
-  table.batch-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-top: 12px; }
+  table.batch-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-top: 12px; font-variant-numeric: tabular-nums; }
   table.batch-table th, table.batch-table td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--border); }
-  table.batch-table tr:hover td { background: rgba(255,255,255,0.02); }
+  table.batch-table tr:hover td { background: rgba(13,148,251,0.04); }
   .dist-bar-row { display: flex; align-items: center; gap: 8px; margin: 4px 0; font-size: 0.8rem; }
-  .dist-bar-track { flex: 1; background: #21262d; height: 14px; border-radius: 4px; overflow: hidden; }
-  .dist-bar-fill { height: 100%; background: linear-gradient(90deg, #b8860b, var(--accent)); transition: width 0.4s ease; }
+  .dist-bar-track { flex: 1; background: #141b28; height: 14px; border-radius: 4px; overflow: hidden; }
+  .dist-bar-fill { height: 100%; background: linear-gradient(90deg, #0c2651, var(--accent)); transition: width 0.4s ease; }
   .toggle-row { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--muted); }
   .sim-slider-label { display: flex; justify-content: space-between; font-size: 0.8rem; margin-top: 10px; }
   .sim-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
   .sim-checkbox-row { display: flex; align-items: center; gap: 8px; margin-top: 12px; font-size: 0.85rem; }
   .compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
-  .compare-card { background: #0d1117; border: 1px solid var(--border); border-radius: 10px; padding: 14px; transition: border-color 0.2s ease; }
-  .compare-card:hover { border-color: var(--accent); }
+  .compare-card { background: rgba(6,9,15,0.7); border: 1px solid var(--border); border-radius: 10px; padding: 14px; transition: border-color 0.2s ease, backdrop-filter 0.2s ease; }
+  .compare-card:hover { border-color: var(--accent); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
   .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; margin-right: 8px; vertical-align: -2px; }
   @keyframes spin { to { transform: rotate(360deg); } }
   /* Chatbot widget */
   #chat-fab {
     position: fixed; bottom: 24px; right: 24px; width: 56px; height: 56px; border-radius: 50%;
-    background: linear-gradient(135deg, #e2a930, var(--accent)); color: #1a1400; border: none; font-size: 1.4rem; cursor: pointer;
-    box-shadow: 0 4px 20px rgba(210,153,34,0.35); z-index: 50; transition: transform 0.15s ease;
+    background: linear-gradient(135deg, #3aa8ff, var(--accent)); color: #04101f; border: none; font-size: 1.3rem; cursor: pointer;
+    box-shadow: 0 4px 20px rgba(13,148,251,0.4); z-index: 50; transition: transform 0.15s ease;
   }
   #chat-fab:hover { transform: scale(1.06); }
+  @keyframes gentleBounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
+  #chat-fab.bouncing { animation: gentleBounce 2.4s ease-in-out infinite; }
+  #chat-fab.bouncing:hover { animation-play-state: paused; }
+  #chat-teaser {
+    position: fixed; bottom: 92px; right: 24px; max-width: 220px;
+    background: rgba(14,20,32,0.92); border: 1px solid var(--border); border-radius: 12px;
+    padding: 10px 14px; font-size: 0.8rem; line-height: 1.4; color: var(--text);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4); z-index: 49; cursor: pointer;
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    animation: teaserIn 0.35s ease;
+  }
+  #chat-teaser::after {
+    content: ""; position: absolute; bottom: -7px; right: 22px;
+    width: 12px; height: 12px; background: rgba(14,20,32,0.92);
+    border-right: 1px solid var(--border); border-bottom: 1px solid var(--border);
+    transform: rotate(45deg);
+  }
+  #chat-teaser .teaser-close {
+    position: absolute; top: 4px; right: 6px; font-size: 0.7rem; color: var(--muted);
+    background: none; border: none; cursor: pointer; padding: 2px 4px;
+  }
+  @keyframes teaserIn { from { opacity: 0; transform: translateY(6px) scale(0.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
   #chat-panel {
     position: fixed; bottom: 92px; right: 24px; width: 360px; max-width: calc(100vw - 48px);
-    height: 460px; background: var(--panel); border: 1px solid var(--border); border-radius: 14px;
+    height: 460px; background: rgba(14,20,32,0.75); border: 1px solid var(--border); border-radius: 14px;
     display: none; flex-direction: column; overflow: hidden; z-index: 50; box-shadow: 0 12px 40px rgba(0,0,0,0.55);
     animation: fadeIn 0.2s ease;
+    backdrop-filter: blur(20px) saturate(140%); -webkit-backdrop-filter: blur(20px) saturate(140%);
   }
   #chat-panel.open { display: flex; }
   #chat-header { padding: 12px 14px; border-bottom: 1px solid var(--border); font-size: 0.85rem; font-weight: 600; color: var(--accent); }
@@ -114,7 +137,7 @@
   .chat-msg.assistant { color: var(--text); }
   .chat-msg .role-label { font-size: 0.68rem; color: var(--muted); display: block; margin-bottom: 2px; }
   #chat-input-row { display: flex; gap: 6px; padding: 10px; border-top: 1px solid var(--border); }
-  #chat-input { flex: 1; }
+  #chat-input { flex: 1; background: rgba(20,27,40,0.7); }
 </style>
 </head>
 <body>
@@ -128,6 +151,7 @@
     <button class="tab-btn" data-tab="compare">⚖️ Compare Merchants</button>
     <button class="tab-btn" data-tab="tradeoff">📊 Threshold Tradeoff</button>
     <button class="tab-btn" data-tab="performance">📈 Model Performance</button>
+    <button class="tab-btn" data-tab="fairness">🎯 Fairness Check</button>
     <button class="tab-btn" data-tab="batch">📁 Batch Upload</button>
     <button class="tab-btn" data-tab="impact">💰 Business Impact</button>
     <button class="tab-btn" data-tab="audit">🧾 Audit Trail</button>
@@ -211,6 +235,14 @@
   </div>
 
   <!-- BATCH -->
+  <div class="tab-panel" id="tab-fairness">
+    <div class="panel">
+      <h2>Fairness Check — Segment-Level Analysis</h2>
+      <p id="fairness-methodology" style="color:var(--muted); font-size:0.85rem;">Loading…</p>
+      <div id="fairness-result"></div>
+    </div>
+  </div>
+
   <div class="tab-panel" id="tab-batch">
     <div class="panel">
       <h2>Batch Portfolio Assessment</h2>
@@ -262,13 +294,17 @@
   </div>
 </div>
 
-<!-- AI Compliance Assistant -->
-<button id="chat-fab" title="Ask the AI Compliance Assistant">💬</button>
+<!-- AI Compliance Assistant: Blade -->
+<button id="chat-fab" class="bouncing" title="Ask Blade">⚡</button>
+<div id="chat-teaser" style="display:none;">
+  <button class="teaser-close" id="teaser-close-btn">✕</button>
+  👋 Hey, I'm <strong>Blade</strong> — ask me anything about the model or a merchant's risk score.
+</div>
 <div id="chat-panel">
-  <div id="chat-header">AI Compliance Assistant</div>
+  <div id="chat-header">⚡ Blade — AI Compliance Assistant</div>
   <div id="chat-messages"></div>
   <div id="chat-input-row">
-    <input type="text" id="chat-input" placeholder="Ask about the model or current merchant…">
+    <input type="text" id="chat-input" placeholder="Ask Blade about the model or current merchant…">
     <button class="primary small" id="chat-send-btn">Send</button>
   </div>
 </div>
@@ -294,12 +330,14 @@ const FEATURE_DEFS = [
 ];
 
 // ---------- Tabs ----------
+let currentTabName = "Assess a Merchant";
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
     btn.classList.add('active');
     document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+    currentTabName = btn.textContent.trim();
   });
 });
 
@@ -609,7 +647,34 @@ document.getElementById("export-batch-btn").addEventListener("click", () => {
 // ---------- Chatbot ----------
 document.getElementById("chat-fab").addEventListener("click", () => {
   document.getElementById("chat-panel").classList.toggle("open");
+  document.getElementById("chat-fab").classList.remove("bouncing");
+  hideTeaser();
 });
+
+function hideTeaser() {
+  const teaser = document.getElementById("chat-teaser");
+  teaser.style.display = "none";
+}
+
+document.getElementById("teaser-close-btn").addEventListener("click", (e) => {
+  e.stopPropagation();
+  hideTeaser();
+});
+
+document.getElementById("chat-teaser").addEventListener("click", () => {
+  document.getElementById("chat-panel").classList.add("open");
+  document.getElementById("chat-fab").classList.remove("bouncing");
+  hideTeaser();
+});
+
+// Show the teaser bubble shortly after load; auto-dismiss if ignored
+setTimeout(() => {
+  const teaser = document.getElementById("chat-teaser");
+  if (!document.getElementById("chat-panel").classList.contains("open")) {
+    teaser.style.display = "block";
+    setTimeout(hideTeaser, 8000); // auto-dismiss after 8s if untouched
+  }
+}, 1800);
 
 function appendChatMessage(role, text) {
   const el = document.getElementById("chat-messages");
@@ -638,7 +703,7 @@ async function sendChatMessage() {
 
   const res = await fetch("/api/chat", {
     method: "POST", headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({message, history: chatHistory.slice(0, -1), current_merchant: currentMerchant}),
+    body: JSON.stringify({message, history: chatHistory.slice(0, -1), current_merchant: currentMerchant, current_tab: currentTabName}),
   });
   const data = await res.json();
   document.getElementById("chat-messages").lastChild.remove();
@@ -673,14 +738,58 @@ async function calcImpact() {
 }
 document.getElementById("impact-calc-btn").addEventListener("click", calcImpact);
 
+// ---------- Fairness Check ----------
+async function loadFairness() {
+  const res = await fetch("/api/fairness-check");
+  const data = await res.json();
+  document.getElementById("fairness-methodology").textContent = data.methodology;
+
+  const resEl = document.getElementById("fairness-result");
+  resEl.innerHTML = data.segments.map(seg => {
+    const rows = seg.groups.map(g => {
+      const ratio = g.ratio;
+      let ratioColor = "var(--text)";
+      if (ratio !== null) {
+        if (ratio > 1.6) ratioColor = "var(--danger)";
+        else if (ratio > 1.3) ratioColor = "var(--accent)";
+        else ratioColor = "var(--safe)";
+      }
+      return `<tr>
+        <td>${g.label}</td>
+        <td>${g.n}</td>
+        <td>${g.actual_risk_rate !== null ? (g.actual_risk_rate*100).toFixed(1)+'%' : '—'}</td>
+        <td>${g.flag_rate !== null ? (g.flag_rate*100).toFixed(1)+'%' : '—'}</td>
+        <td style="color:${ratioColor}; font-weight:600;">${ratio !== null ? ratio+'×' : '—'}</td>
+        <td>${g.precision !== null ? (g.precision*100).toFixed(1)+'%' : '—'}</td>
+        <td>${g.recall !== null ? (g.recall*100).toFixed(1)+'%' : '—'}</td>
+      </tr>`;
+    }).join("");
+    return `
+      <div style="margin-top:20px;">
+        <strong>${seg.name}</strong>
+        <table class="batch-table">
+          <tr><th>Group</th><th>n</th><th>Actual risk</th><th>Flag rate</th><th>Ratio</th><th>Precision</th><th>Recall</th></tr>
+          ${rows}
+        </table>
+      </div>`;
+  }).join("");
+}
+
 // ---------- Init ----------
 loadMetrics();
 loadRoc();
 loadThresholdSweep();
-loadSampleMerchants();
-loadAuditLog();
 buildSimulator();
-appendChatMessage("assistant", "Hi! Ask me anything about the model — e.g. \"why is precision only 26%?\" or \"what happens if we review 25% of accounts instead of 15%?\"");
+loadSampleMerchants().then(() => {
+  // Auto-populate every tab on load so nothing looks empty on first view
+  assess();
+  runSimulation();
+  compareMerchants();
+});
+loadAuditLog();
+calcImpact();
+loadFairness();
+appendChatMessage("assistant", "Hey, I'm Blade ⚡ — ask me anything about the model, e.g. \"why is precision only 26%?\" or \"what happens if we review 25% of accounts instead of 15%?\"");
 </script>
 </body>
 </html>

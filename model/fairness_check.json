@@ -1,0 +1,83 @@
+{
+  "methodology": "For each segment, we compare the model's flag rate (at the deployed 15%-capacity threshold) against the actual freeze-risk rate in that segment on the held-out test set. The 'ratio' column is flag_rate / actual_risk_rate -- close to 1.0 means the model is flagging that segment proportionally to its real risk, not over- or under-targeting it. Small subgroup sizes (n) make ratios noisier -- read with that in mind rather than treating small deviations as proof of bias.",
+  "segments": [
+    {
+      "name": "Merchant category risk tier",
+      "groups": [
+        {
+          "label": "Standard category",
+          "n": 1293,
+          "actual_risk_rate": 0.0889,
+          "flag_rate": 0.1299,
+          "precision": 0.2143,
+          "recall": 0.313,
+          "ratio": 1.46
+        },
+        {
+          "label": "High-risk category",
+          "n": 207,
+          "actual_risk_rate": 0.1981,
+          "flag_rate": 0.2754,
+          "precision": 0.3684,
+          "recall": 0.5122,
+          "ratio": 1.39
+        }
+      ]
+    },
+    {
+      "name": "Geography mismatch",
+      "groups": [
+        {
+          "label": "No geo mismatch",
+          "n": 1398,
+          "actual_risk_rate": 0.0944,
+          "flag_rate": 0.1316,
+          "precision": 0.2283,
+          "recall": 0.3182,
+          "ratio": 1.39
+        },
+        {
+          "label": "Geo mismatch present",
+          "n": 102,
+          "actual_risk_rate": 0.2353,
+          "flag_rate": 0.402,
+          "precision": 0.3659,
+          "recall": 0.625,
+          "ratio": 1.71
+        }
+      ]
+    },
+    {
+      "name": "International transaction share",
+      "groups": [
+        {
+          "label": "Low (<10%)",
+          "n": 1212,
+          "actual_risk_rate": 0.1031,
+          "flag_rate": 0.1403,
+          "precision": 0.2588,
+          "recall": 0.352,
+          "ratio": 1.36
+        },
+        {
+          "label": "Medium (10-30%)",
+          "n": 280,
+          "actual_risk_rate": 0.1036,
+          "flag_rate": 0.1893,
+          "precision": 0.2264,
+          "recall": 0.4138,
+          "ratio": 1.83
+        },
+        {
+          "label": "High (30%+)",
+          "n": 8,
+          "actual_risk_rate": 0.25,
+          "flag_rate": 0.25,
+          "precision": 0.5,
+          "recall": 0.5,
+          "ratio": 1.0
+        }
+      ]
+    }
+  ]
+}

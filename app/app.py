@@ -32,6 +32,7 @@ MODEL_PATH = os.path.join(BASE_DIR, "model", "freeze_risk_model.joblib")
 METRICS_PATH = os.path.join(BASE_DIR, "model", "metrics.json")
 ROC_PATH = os.path.join(BASE_DIR, "model", "roc_curve.json")
 SWEEP_PATH = os.path.join(BASE_DIR, "model", "threshold_sweep.json")
+FAIRNESS_PATH = os.path.join(BASE_DIR, "model", "fairness_check.json")
 DATA_PATH = os.path.join(BASE_DIR, "data", "merchant_freeze_risk_dataset.csv")
 AUDIT_LOG_PATH = os.path.join(BASE_DIR, "logs", "audit_log.jsonl")
 
@@ -48,9 +49,18 @@ with open(ROC_PATH) as f:
     ROC_CURVE = json.load(f)
 with open(SWEEP_PATH) as f:
     THRESHOLD_SWEEP = json.load(f)
+with open(FAIRNESS_PATH) as f:
+    FAIRNESS_CHECK = json.load(f)
 
 _POPULATION_DF = pd.read_csv(DATA_PATH)
 _LAST_BATCH_SUMMARY = {"value": None}  # simple in-memory holder, single-user local app
+_DATASET_STATS = {
+    "n": int(len(_POPULATION_DF)),
+    "positive_rate": float(_POPULATION_DF["freeze_risk_label"].mean()),
+    "avg_kyc": float(_POPULATION_DF["kyc_completeness_score"].mean()),
+    "geo_mismatch_rate": float(_POPULATION_DF["geo_mismatch_flag"].mean()),
+    "high_risk_rate": float(_POPULATION_DF["high_risk_category_flag"].mean()),
+}
 
 
 def score_merchant(feature_dict):
@@ -162,6 +172,7 @@ def chat_endpoint():
     message = payload.get("message", "").strip()
     history = payload.get("history", [])
     current_merchant = payload.get("current_merchant")
+    current_tab = payload.get("current_tab")
 
     if not message:
         return jsonify({"error": "Empty message"}), 400
@@ -171,6 +182,8 @@ def chat_endpoint():
         current_merchant=current_merchant,
         threshold_sweep=THRESHOLD_SWEEP,
         last_batch=_LAST_BATCH_SUMMARY["value"],
+        dataset_stats=_DATASET_STATS,
+        current_tab=current_tab,
     )
     return jsonify({"reply": reply, "source": source})
 
@@ -191,6 +204,11 @@ def threshold_sweep_endpoint():
     precomputed operating point rather than calling the model live, so the
     UI updates instantly with no per-drag inference cost."""
     return jsonify(THRESHOLD_SWEEP)
+
+
+@app.route("/api/fairness-check")
+def fairness_check_endpoint():
+    return jsonify(FAIRNESS_CHECK)
 
 
 @app.route("/api/sample-batch-csv")

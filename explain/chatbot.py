@@ -27,9 +27,11 @@ except ImportError:
 
 CHAT_MODEL = "openai/gpt-oss-20b"
 
-SYSTEM_PROMPT_TEMPLATE = """You are the AI Compliance Assistant for Freeze-Risk Guardian, a tool that \
-predicts compliance-driven merchant account freezes for a payments platform (built for a \
-hackathon, Track 02: AI Risk Manager).
+SYSTEM_PROMPT_TEMPLATE = """You are Blade, the AI Compliance Assistant built into Freeze-Risk Guardian, a tool that \
+predicts compliance-driven merchant account freezes for a payments platform (built for a hackathon, \
+Track 02: AI Risk Manager). Your name nods to the razor-blade symbol in Razorpay's own logo -- sharp, \
+precise, no wasted motion. Match that in your tone: direct, confident, no filler, no hedging when the \
+facts support a clear answer.
 
 Answer questions about the model, its methodology, and the current merchant (if given) using \
 ONLY the facts below. Never invent numbers that aren't provided. If asked something the facts \
@@ -51,9 +53,16 @@ recall is prioritized over precision within the review-capacity budget
 - Explainability: per-merchant contributions computed via a z-score-weighted feature deviation \
 method (SHAP-style local attribution), not just global feature importance -- so two merchants \
 can show different top reasons for their score
+- Fairness check: flag-rate-to-actual-risk ratios across segments range 1.0-1.83 on the test set \
+(Geography mismatch and Medium international-share segments run somewhat higher, ~1.7-1.8x, with \
+modest sample sizes of ~100-280 -- worth monitoring, not evidence of severe bias). No segment is \
+flagged at a wildly disproportionate rate.
 - Labels are RULE-BASED SYNTHETIC ground truth (built from documented public freeze triggers: \
 KYC gaps, volume spikes, chargeback ratios, geography mismatch), not real Razorpay data, since \
 real freeze data is private
+
+DATASET-LEVEL STATS (for general questions not tied to one merchant):
+{dataset_stats}
 
 THRESHOLD SWEEP TABLE (what precision/recall/savings would be at other review-capacity levels \
 -- use this to answer "what if" questions with REAL numbers instead of guessing):
@@ -62,6 +71,8 @@ THRESHOLD SWEEP TABLE (what precision/recall/savings would be at other review-ca
 {batch_context}
 
 {merchant_context}
+
+{tab_context}
 
 If someone asks about a specific merchant but no merchant context is given above, tell them to \
 select that merchant in the "Assess a Merchant" tab and click "Assess Risk" first -- you cannot \
@@ -93,7 +104,20 @@ def _format_threshold_table(sweep_data):
     return "\n".join(lines)
 
 
-def build_system_prompt(metrics, current_merchant=None, threshold_sweep=None, last_batch=None):
+def _format_dataset_stats(dataset_stats):
+    if not dataset_stats:
+        return "(not available)"
+    return (
+        f"- Training/test population: {dataset_stats.get('n', 0):,} synthetic merchants\n"
+        f"- Overall freeze-risk positive rate: {dataset_stats.get('positive_rate', 0):.1%}\n"
+        f"- Average KYC completeness score: {dataset_stats.get('avg_kyc', 0):.1f}/100\n"
+        f"- Geo-mismatch present in: {dataset_stats.get('geo_mismatch_rate', 0):.1%} of merchants\n"
+        f"- High-risk category merchants: {dataset_stats.get('high_risk_rate', 0):.1%}"
+    )
+
+
+def build_system_prompt(metrics, current_merchant=None, threshold_sweep=None, last_batch=None,
+                         dataset_stats=None, current_tab=None):
     merchant_context = "No specific merchant is currently loaded."
     if current_merchant:
         merchant_context = (
@@ -110,6 +134,7 @@ def build_system_prompt(metrics, current_merchant=None, threshold_sweep=None, la
             f"({last_batch.get('flag_rate', 0):.1%}), average risk score "
             f"{last_batch.get('avg_risk_score', 0):.1%}."
         )
+    tab_context = f"The user is currently looking at the \"{current_tab}\" tab." if current_tab else ""
     cm = metrics.get("confusion_matrix", {})
     return SYSTEM_PROMPT_TEMPLATE.format(
         precision=metrics.get("precision", 0),
@@ -119,12 +144,15 @@ def build_system_prompt(metrics, current_merchant=None, threshold_sweep=None, la
         tp=cm.get("TP", 0), fp=cm.get("FP", 0), fn=cm.get("FN", 0), tn=cm.get("TN", 0),
         savings=metrics.get("estimated_cost_inr", {}).get("estimated_savings_inr", 0),
         threshold_table=_format_threshold_table(threshold_sweep),
+        dataset_stats=_format_dataset_stats(dataset_stats),
         batch_context=batch_context,
         merchant_context=merchant_context,
+        tab_context=tab_context,
     )
 
 
-def chat(message, history, metrics, current_merchant=None, threshold_sweep=None, last_batch=None, api_key=None):
+def chat(message, history, metrics, current_merchant=None, threshold_sweep=None, last_batch=None,
+         dataset_stats=None, current_tab=None, api_key=None):
     """
     message: the new user message (str)
     history: list of {"role": "user"|"assistant", "content": str} prior turns
@@ -132,17 +160,21 @@ def chat(message, history, metrics, current_merchant=None, threshold_sweep=None,
     current_merchant: optional dict with the currently-assessed merchant's result
     threshold_sweep: optional dict (threshold_sweep.json content) for "what if" questions
     last_batch: optional dict with the most recent batch-assess summary
+    dataset_stats: optional dict with population-level dataset statistics
+    current_tab: optional str, which tab the user is currently viewing
     Returns: (reply_text, source) where source is "groq_llm" or "unavailable"
     """
     api_key = api_key or os.environ.get("GROQ_API_KEY")
     if not api_key or not GROQ_AVAILABLE:
         return (
-            "The AI assistant needs a Groq API key to answer live questions. "
+            "Blade needs a Groq API key to answer live questions. "
             "Set GROQ_API_KEY and restart the app -- see the README for a free key.",
             "unavailable",
         )
 
-    system_prompt = build_system_prompt(metrics, current_merchant, threshold_sweep, last_batch)
+    system_prompt = build_system_prompt(
+        metrics, current_merchant, threshold_sweep, last_batch, dataset_stats, current_tab
+    )
     messages = [{"role": "system", "content": system_prompt}]
     messages.extend(history[-8:])  # keep last few turns only -- bounded context
     messages.append({"role": "user", "content": message})
@@ -153,8 +185,8 @@ def chat(message, history, metrics, current_merchant=None, threshold_sweep=None,
             model=CHAT_MODEL,
             messages=messages,
             temperature=0.4,
-            max_tokens=400,
+            max_tokens=450,
         )
         return response.choices[0].message.content.strip(), "groq_llm"
     except Exception as e:
-        return f"The assistant hit an error reaching Groq: {e}", "error"
+        return f"Blade hit an error reaching Groq: {e}", "error"

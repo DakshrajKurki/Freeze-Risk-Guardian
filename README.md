@@ -23,6 +23,7 @@ Razorpay's existing AI stack (Vulcan, chargeback-response agents, subscription-r
 10. **Downloadable report** — export any assessment as a plain-text compliance readiness report.
 11. **Plain-English / Technical explanation toggle** — switch the LLM explanation between merchant-facing language and compliance-team technical language (references actual contribution values).
 12. **Risk grade badge (A–F)** — quick-read letter grade alongside the precise percentage.
+13. **Fairness check** — segment-level analysis on the held-out test set comparing flag rate to actual freeze-risk rate across merchant category, geo-mismatch, and international-transaction-share segments, with a flag-rate-to-actual-risk ratio per group so over- or under-targeting is visible, not assumed away.
 
 ## Architecture
 
