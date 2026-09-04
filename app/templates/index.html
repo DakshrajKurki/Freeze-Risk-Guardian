@@ -19,27 +19,29 @@
   }
   .wrap { max-width: 1200px; margin: 0 auto; }
   h1 {
-    font-size: 1.7rem; margin-bottom: 4px; letter-spacing: -0.02em;
+    font-size: 1.7rem; margin-bottom: 4px; letter-spacing: -0.02em; text-align: center;
     background: linear-gradient(135deg, #fff, #0d94fb 140%);
     -webkit-background-clip: text; background-clip: text; color: transparent;
   }
-  .subtitle { color: var(--muted); margin-bottom: 8px; font-size: 0.95rem; }
+  .subtitle { color: var(--muted); margin-bottom: 8px; font-size: 0.95rem; text-align: center; }
+  .tabs-label { text-align: center; }
   .tabs-label {
     font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted);
-    margin: 6px 0 6px 2px; font-weight: 600;
+    margin: 6px 0 8px 2px; font-weight: 600;
   }
+  .tabs-group:first-of-type { margin-top: 18px; }
   .tabs-group:first-of-type .tabs-label { margin-top: 4px; }
-  .tabs {
-    display: flex; gap: 4px; margin: 0 0 4px 0; flex-wrap: wrap;
-  }
-  .tabs-group:last-of-type .tabs { border-bottom: 1px solid var(--border); padding-bottom: 4px; margin-bottom: 20px; }
+  .tabs-group:last-of-type { margin-top: 22px; padding-top: 16px; border-top: 1px solid var(--border); }
+  .tabs-group:last-of-type .tabs { border-bottom: 1px solid var(--border); padding-bottom: 4px; margin-bottom: 24px; }
   .tab-btn {
     background: none; border: none; color: var(--muted); padding: 9px 13px;
     cursor: pointer; font-size: 0.82rem; border-bottom: 2px solid transparent; white-space: nowrap;
     border-radius: 6px 6px 0 0;
-    transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+    transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease, transform 0.1s ease;
   }
   .tab-btn:hover { color: var(--text); background: rgba(13,148,251,0.06); }
+  .tab-btn:active { transform: scale(0.94); }
+  .tabs { display: flex; gap: 4px; margin: 0 0 4px 0; flex-wrap: wrap; justify-content: center; }
   .tab-btn:hover { color: var(--text); }
   .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
   .tab-panel { display: none; animation: fadeIn 0.25s ease; }
@@ -167,8 +169,8 @@
   <div class="tabs-group">
     <div class="tabs-label">Model Insights</div>
     <div class="tabs">
-      <button class="tab-btn" data-tab="tradeoff">📊 Threshold Tradeoff</button>
       <button class="tab-btn" data-tab="performance">📈 Model Performance</button>
+      <button class="tab-btn" data-tab="tradeoff">📊 Threshold Tradeoff</button>
       <button class="tab-btn" data-tab="fairness">🎯 Fairness Check</button>
       <button class="tab-btn" data-tab="impact">💰 Business Impact</button>
       <button class="tab-btn" data-tab="audit">🧾 Audit Trail</button>
@@ -185,7 +187,7 @@
         <label class="toggle-row"><input type="checkbox" id="style-toggle"> Technical explanation (for compliance team, not merchant)</label>
       </div>
       <div id="result"></div>
-      <button class="small" id="download-report-btn" style="display:none; margin-top:14px;">⬇ Download Report</button>
+      <button class="small" id="download-report-btn" style="display:none; margin-top:14px;">⬇ Download Report (PDF)</button>
     </div>
   </div>
 
@@ -247,7 +249,7 @@
       </div>
       <div class="panel">
         <h2>ROC Curve (AUC <span id="roc-auc">-</span>)</h2>
-        <svg id="roc-svg" viewBox="0 0 300 300" width="100%" style="max-width:300px;"></svg>
+        <svg id="roc-svg" viewBox="0 0 300 300" style="width:100%; max-width:300px; height:auto; aspect-ratio:1/1;"></svg>
       </div>
     </div>
   </div>
@@ -310,6 +312,17 @@
       <pre class="audit" id="audit-log">Run an assessment to populate the audit trail…</pre>
     </div>
   </div>
+
+  <footer style="margin-top:48px; padding-top:24px; border-top:1px solid var(--border); text-align:center;">
+    <div style="font-size:0.8rem; color:var(--muted); margin-bottom:10px;">
+      Built with Flask · scikit-learn · Groq · Random Forest, 300 trees, trained on 6,000 synthetic merchant snapshots
+    </div>
+    <div style="font-size:0.78rem; color:var(--muted);">
+      Freeze-Risk Guardian — Razorpay AI Buildathon 2026, Track 02: AI Risk Manager
+      &nbsp;·&nbsp;
+      <a href="https://github.com/DakshrajKurki/Freeze-Risk-Guardian" target="_blank" style="color:var(--accent); text-decoration:none;">View on GitHub</a>
+    </div>
+  </footer>
 </div>
 
 <!-- AI Compliance Assistant: Blade -->
@@ -327,6 +340,8 @@
   </div>
 </div>
 
+<script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
 let sampleMerchants = [];
 let thresholdSweep = [];
@@ -495,31 +510,77 @@ document.getElementById("assess-btn").addEventListener("click", assess);
 document.getElementById("download-report-btn").addEventListener("click", () => {
   if (!lastAssessResult) return;
   const d = lastAssessResult;
-  const lines = [
-    `FREEZE-RISK GUARDIAN — COMPLIANCE READINESS REPORT`,
-    `Merchant: ${d.merchant_id}`,
-    `Generated: ${new Date().toLocaleString()}`,
-    ``,
-    `Risk Score: ${(d.risk_score*100).toFixed(1)}%  (Grade ${d.grade})`,
-    `Status: ${d.flagged ? "ELEVATED RISK" : "NORMAL RANGE"}`,
-    ``,
-    `Explanation:`,
-    d.explanation,
-    ``,
-    `Recommended Actions:`,
-    ...(d.checklist || []).map(c => `- ${c}`),
-    ``,
-    `Contributing Factors:`,
-    ...d.top_factors.map(f => `- ${f.feature} = ${f.value} (${f.direction}, ${f.contribution >= 0 ? '+' : ''}${f.contribution})`),
-    ``,
-    `--`,
-    `Generated by Freeze-Risk Guardian | Razorpay AI Buildathon Track 02`,
-  ];
-  const blob = new Blob([lines.join("\n")], {type: "text/plain"});
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = `${d.merchant_id}_risk_report.txt`;
-  a.click();
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  const pageWidth = doc.internal.pageSize.getWidth();
+  let y = 20;
+
+  doc.setFontSize(16);
+  doc.setTextColor(13, 148, 251);
+  doc.text("Freeze-Risk Guardian", 14, y);
+  y += 7;
+  doc.setFontSize(10);
+  doc.setTextColor(120, 120, 120);
+  doc.text("Compliance Readiness Report", 14, y);
+  y += 10;
+
+  doc.setDrawColor(210, 210, 210);
+  doc.line(14, y, pageWidth - 14, y);
+  y += 8;
+
+  doc.setFontSize(11);
+  doc.setTextColor(30, 30, 30);
+  doc.text(`Merchant: ${d.merchant_id}`, 14, y); y += 6;
+  doc.text(`Generated: ${new Date().toLocaleString()}`, 14, y); y += 10;
+
+  const statusColor = d.flagged ? [248, 81, 73] : [63, 185, 80];
+  doc.setFillColor(...statusColor);
+  doc.roundedRect(14, y - 6, pageWidth - 28, 14, 2, 2, "F");
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(12);
+  doc.text(`${d.flagged ? "ELEVATED RISK" : "NORMAL RANGE"} — ${(d.risk_score*100).toFixed(1)}%  (Grade ${d.grade})`, 18, y + 3);
+  y += 18;
+
+  doc.setTextColor(30, 30, 30);
+  doc.setFontSize(10);
+  const explanationLines = doc.splitTextToSize(d.explanation, pageWidth - 28);
+  doc.text(explanationLines, 14, y);
+  y += explanationLines.length * 5 + 8;
+
+  if (d.checklist && d.checklist.length) {
+    doc.setFontSize(11);
+    doc.setTextColor(13, 148, 251);
+    doc.text("Recommended Actions", 14, y); y += 7;
+    doc.setFontSize(10);
+    doc.setTextColor(30, 30, 30);
+    d.checklist.forEach(item => {
+      const lines = doc.splitTextToSize(`•  ${item}`, pageWidth - 28);
+      doc.text(lines, 14, y);
+      y += lines.length * 5 + 2;
+    });
+    y += 6;
+  }
+
+  doc.setFontSize(11);
+  doc.setTextColor(13, 148, 251);
+  doc.text("Contributing Factors", 14, y); y += 7;
+  doc.setFontSize(9.5);
+  d.top_factors.forEach(f => {
+    doc.setTextColor(f.contribution > 0 ? 200 : 40, f.contribution > 0 ? 40 : 150, 40);
+    doc.text(`${f.contribution >= 0 ? "▲" : "▼"} ${f.feature} = ${f.value}`, 14, y);
+    doc.setTextColor(100, 100, 100);
+    doc.text(`(${f.direction}, ${f.contribution >= 0 ? "+" : ""}${f.contribution})`, 100, y);
+    y += 6;
+  });
+
+  y += 10;
+  doc.setDrawColor(210, 210, 210);
+  doc.line(14, y, pageWidth - 14, y); y += 6;
+  doc.setFontSize(8);
+  doc.setTextColor(140, 140, 140);
+  doc.text("Generated by Freeze-Risk Guardian | Razorpay AI Buildathon, Track 02", 14, y);
+
+  doc.save(`${d.merchant_id}_risk_report.pdf`);
 });
 
 // ---------- What-If Simulator ----------
