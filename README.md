@@ -1,81 +1,249 @@
+[README-2.md](https://github.com/user-attachments/files/31869283/README-2.md)
 # Freeze-Risk Guardian
+
 **Razorpay AI Buildathon 2026 — Track 02: AI Risk Manager**
 
 Predicting compliance-driven merchant account freezes and reserve holds *before* they happen — and explaining, in plain language, what a merchant needs to fix.
 
+🔗 **Live demo:** [Add your Render URL here]
+🎥 **Video walkthrough:** [Add your video link here]
+
+---
+
 ## The problem (and why it's real)
 
-Razorpay's own published guidance and independent 2026 merchant reviews agree on the same thing: the biggest operational pain for merchants isn't fraud loss — it's unexpected account freezes and rolling reserves triggered by compliance reviews (incomplete KYC, sudden volume spikes, transaction patterns inconsistent with a merchant's declared profile). Merchant surveys report that unexpected holds have a severe cash-flow impact for a large share of businesses. Today, Razorpay's dashboard tells a merchant *that* a hold happened — nothing predicts it, or explains what to fix beforehand.
+Razorpay's own published guidance and independent 2026 merchant reviews agree on the same thing: the biggest operational pain for merchants isn't fraud loss — it's unexpected account freezes and rolling reserves triggered by compliance reviews (incomplete KYC, sudden volume spikes, transaction patterns inconsistent with a merchant's declared profile). Merchant surveys report that unexpected holds have a severe cash-flow impact for a large share of businesses. Today, a dashboard tells a merchant *that* a hold happened — nothing predicts it, or explains what to fix beforehand.
 
-Razorpay's existing AI stack (Vulcan, chargeback-response agents, subscription-recovery agents) already covers classic fraud and churn. This does not. That's the gap this project targets — a class of "loss" (locked-up cash flow, compliance friction) distinct from the fraud/chargeback examples Track 02 lists, but squarely inside its "stop the merchant losing money" mandate.
+Razorpay's existing AI stack (fraud detection, chargeback-response agents, subscription-recovery agents) already covers classic fraud and churn. It doesn't cover this. That's the gap this project targets — a class of loss (locked-up cash flow from compliance friction) distinct from fraud/chargeback examples, but squarely inside the "stop the merchant losing money" mandate of Track 02.
+
+---
 
 ## What it does
 
-1. **Detector** — a Random Forest classifier scores a merchant snapshot's probability of triggering a compliance hold, trained on synthetic data whose labeling logic is built directly from documented, public freeze triggers (see `data/generate_synthetic_data.py` for the exact rules and sourcing rationale).
-2. **Decision policy** — rather than an arbitrary 0.5 cutoff, the deployed threshold is chosen under a **review-capacity constraint** (flag only the riskiest ~15% of accounts a compliance team could plausibly review per cycle), not a naive cost-minimization formula. See "What broke" below — this was a real design pivot, not an assumption made upfront. A **live interactive slider** in the dashboard lets you drag the threshold and watch precision/recall/cost/confusion-matrix update instantly (precomputed as a threshold-sweep table so it's not calling the model on every drag).
-3. **Local, per-merchant explainability** — every flagged merchant gets a **SHAP-based explanation specific to their own numbers**, not a static global "top factors" list. Two merchants can be flagged for entirely different reasons and the dashboard shows that. An LLM (Groq API) turns those SHAP contributions into a plain-language explanation and a prioritized remediation checklist, with a deterministic rule-based fallback if the API key is missing or the call fails.
-4. **Model performance view** — precision/recall/F1/ROC-AUC plus a live ROC curve and confusion matrix rendered directly in the dashboard, not buried in a JSON file.
-5. **Batch portfolio assessment** — upload a CSV of many merchants at once and get a portfolio-level risk distribution and a ranked list, closer to how a real compliance team would actually use this than one-at-a-time scoring. A sample CSV is one click away for demos.
-6. **Audit trail** — every assessment is logged (timestamp, inputs, score, threshold, explanation source) to `logs/audit_log.jsonl`, viewable in the app.
-7. **AI Compliance Assistant** — a Groq-powered chat widget (bottom-right, any tab) that answers questions about the model, its metrics, the currently-loaded merchant, the full threshold-sweep table (so "what if we reviewed 25% instead of 15%?" gets a real number, not a guess), and the most recent batch upload — all grounded in actual data, never invented.
-8. **What-If Simulator** — drag sliders for any of the 12 features and watch the risk score update live, before even clicking "Assess."
-9. **Compare Merchants** — score two merchants side by side to contrast a low-risk and high-risk profile directly.
-10. **Downloadable report** — export any assessment as a plain-text compliance readiness report.
-11. **Plain-English / Technical explanation toggle** — switch the LLM explanation between merchant-facing language and compliance-team technical language (references actual contribution values).
-12. **Risk grade badge (A–F)** — quick-read letter grade alongside the precise percentage.
-13. **Fairness check** — segment-level analysis on the held-out test set comparing flag rate to actual freeze-risk rate across merchant category, geo-mismatch, and international-transaction-share segments, with a flag-rate-to-actual-risk ratio per group so over- or under-targeting is visible, not assumed away.
+1. **Detector** — a Random Forest classifier (300 trees, scikit-learn) scores a merchant snapshot's probability of triggering a compliance hold, trained on synthetic data whose labeling logic is built directly from documented, public freeze triggers (KYC completeness, geo mismatch, chargeback ratio, refund ratio, volume spikes, prior risk flags, etc.).
+2. **Explainer** — for every flagged merchant, the system generates a signed, per-feature local explanation (which factors pushed risk up, which pulled it down, and by how much), plus a plain-language summary and recommended next actions. Explanations are generated via an LLM (Groq) with a deterministic rule-based fallback if the LLM call fails or times out.
+3. **Simulator** — a What-If tool lets a user drag feature sliders and see the risk band update live, without needing a full re-assessment call.
+4. **Comparator** — side-by-side comparison of two merchants across the same feature set.
+5. **Batch scorer** — CSV upload to score an entire merchant portfolio in one pass, reusing the same scoring endpoint as the single-merchant assessment.
+6. **Governance panels** — model performance (ROC-AUC, precision/recall, confusion matrix), a live threshold tradeoff simulator, a segment-level fairness audit, a business impact projector, and a full audit trail of every prediction made.
+
+---
 
 ## Architecture
 
 ```
-data/generate_synthetic_data.py  -> merchant_freeze_risk_dataset.csv
-model/train_model.py             -> freeze_risk_model.joblib, metrics.json, roc_curve.json, threshold_sweep.json
-explain/local_explain.py         -> per-merchant SHAP explanation (with z-score fallback)
-explain/groq_explainer.py        -> LLM plain-language explanation layer (with rule-based fallback)
-app/app.py                       -> Flask API + dashboard (assess, batch, threshold sweep, ROC, audit)
-app/templates/index.html         -> tabbed single-page demo UI
+┌─────────────────────────────────────────────────────────────┐
+│                        Browser (Frontend)                    │
+│   HTML / CSS / JS — sidebar navigation, live sliders,        │
+│   dropdowns, charts (ROC curve, confusion matrix, etc.)      │
+└───────────────────────────┬───────────────────────────────────┘
+                             │  fetch() calls to relative API routes
+                             ▼
+┌─────────────────────────────────────────────────────────────┐
+│                     Flask Application (app/)                 │
+│                                                               │
+│  Routes:                                                      │
+│   /                     → renders dashboard                  │
+│   /api/assess           → single merchant risk scoring       │
+│   /api/simulate         → live what-if scoring (no logging)  │
+│   /api/compare          → two-merchant side-by-side           │
+│   /api/batch-assess     → CSV upload → bulk scoring           │
+│   /api/model-metrics    → performance stats for dashboard     │
+│   /api/fairness         → segment-level fairness stats        │
+│   /api/business-impact  → savings projection calculator       │
+│   /api/audit-trail      → prediction log retrieval             │
+│                                                               │
+└──────┬───────────────────────────┬────────────────────────────┘
+       │                           │
+       ▼                           ▼
+┌───────────────┐         ┌─────────────────────────┐
+│  model/        │         │  explain/                │
+│  risk_model    │         │  - Groq LLM call for     │
+│  .pkl          │         │    natural-language      │
+│  (Random       │         │    explanation           │
+│  Forest,       │         │  - rule_based_fallback   │
+│  300 trees)    │         │    if LLM call fails      │
+└───────────────┘         └─────────────────────────┘
+       │
+       ▼
+┌───────────────┐
+│  data/         │  6,000 synthetic merchant snapshots
+│                │  (training + held-out test set: 1,500 accounts)
+└───────────────┘
+       │
+       ▼
+┌───────────────┐
+│  logs/         │  audit_trail.jsonl — every prediction logged with
+│                │  input features, flag decision, explanation source,
+│                │  timestamp
+└───────────────┘
 ```
 
-## Setup
+---
+
+## Tech stack
+
+| Layer            | Technology                                   |
+|-------------------|-----------------------------------------------|
+| Backend            | Flask (Python)                                |
+| Model              | scikit-learn — Random Forest, 300 trees        |
+| Explanation engine | Groq LLM API + rule-based fallback             |
+| Deployment         | Render (Gunicorn WSGI server)                  |
+| Frontend           | HTML / CSS / vanilla JS                        |
+| Data               | 6,000 synthetic merchant snapshots (custom generator) |
+
+---
+
+## Model details
+
+- **Algorithm:** Random Forest Classifier, 300 estimators
+- **Training data:** 6,000 synthetic merchant snapshots. Real compliance-freeze data isn't publicly available, so feature correlations (KYC completeness ↔ risk, geo mismatch ↔ risk, chargeback ratio ↔ risk, etc.) were deliberately engineered to mirror patterns described in Razorpay's public compliance guidance, rather than generated as random noise.
+- **Held-out test set:** 1,500 accounts
+- **Deployed policy:** capacity-constrained — flags the top 15% riskiest accounts per review cycle, rather than using a naive cost-minimizing threshold (which was tested and found to flag ~98% of accounts — mathematically "optimal" but operationally useless for a compliance team with limited review capacity).
+- **Decision threshold:** 0.503
+- **Test-set performance:**
+
+| Metric      | Value    |
+|-------------|----------|
+| ROC-AUC     | 0.7053   |
+| Precision   | 25.3%    |
+| Recall      | 36.5%    |
+| F1          | 0.2992   |
+| Confusion matrix | TP: 57, FP: 168, FN: 99, TN: 1176 |
+| Estimated savings (test set) | ₹25,39,800 |
+
+**Top global feature importances:**
+1. `prior_risk_flags_count` — 11.6%
+2. `kyc_doc_age_days` — 11.5%
+3. `kyc_completeness_score` — 11.5%
+4. `days_since_onboarding` — 10.9%
+5. `refund_ratio_pct` — 7.4%
+
+Note: global importance reflects magnitude only, not direction. Per-merchant assessments show signed local attribution (e.g., a low `kyc_completeness_score` can *increase* risk for one merchant while a geo mismatch flag simultaneously *decreases* the assessed risk if other factors offset it) — see the Assess tab for the true per-case breakdown.
+
+### Example: local explanation structure
+
+```python
+# Simplified example of the explanation payload returned by /api/assess
+{
+    "merchant_id": "M101142",
+    "risk_score": 0.835,
+    "risk_grade": "F",
+    "top_factors": [
+        {"feature": "geo_mismatch_flag", "value": 1, "impact": +0.254},
+        {"feature": "kyc_completeness_score", "value": 41.97, "impact": -0.2455},
+        {"feature": "international_txn_share_pct", "value": 21.15, "impact": +0.1643},
+        {"feature": "prior_risk_flags_count", "value": 1, "impact": +0.1082},
+        {"feature": "volume_spike_ratio", "value": 0.72, "impact": -0.0976}
+    ],
+    "explanation_source": "groq_llm",  # or "rule_based_fallback"
+    "plain_language_summary": "This account scores 83% on freeze risk, driven mainly by geo mismatch, international transaction share, and prior risk flags...",
+    "recommended_actions": [
+        "Review and address: geo mismatch flag",
+        "Ensure KYC documents are current and match declared business details",
+        "Flag any recent unusual volume or geography changes to your account manager proactively"
+    ]
+}
+```
+
+### Fairness auditing
+
+For each key segment (merchant category tier, geography mismatch, international transaction share bucket), the system compares flag rate against actual observed risk rate on the held-out test set. A ratio near 1.0 indicates the model is flagging that segment proportionally to its real risk, not over- or under-targeting it. Segments with small sample sizes are explicitly flagged as noisier and not treated as proof of bias on their own.
+
+Example finding: merchants with a geography mismatch present were flagged at a 1.71× ratio relative to their actual risk rate — the highest deviation found — worth continued monitoring as more data becomes available.
+
+---
+
+## Project structure
+
+```
+Freeze-Risk-Guardian/
+├── app/                 # Flask application: routes, templates, static assets
+├── data/                # Synthetic merchant snapshot datasets
+├── explain/             # LLM-based + rule-based explanation logic
+├── logs/                # Audit trail output (prediction logs)
+├── model/               # Trained model artifacts (risk_model.pkl)
+├── .gitignore
+├── Procfile             # Render deployment entry point
+├── README.md
+├── requirements.txt
+└── runtime.txt          # Pinned Python version for Render compatibility
+```
+
+---
+
+## Running locally
 
 ```bash
-python3 -m venv venv && source venv/bin/activate
+# clone the repo
+git clone https://github.com/DakshrajKurki/Freeze-Risk-Guardian.git
+cd Freeze-Risk-Guardian
+
+# install dependencies
 pip install -r requirements.txt
 
-# 1. Generate the synthetic dataset
-python3 data/generate_synthetic_data.py
+# set your Groq API key (required for LLM-based explanations;
+# the app falls back to rule-based explanations if this is unset)
+export GROQ_API_KEY=your_key_here
 
-# 2. Train the model and produce metrics.json
-python3 model/train_model.py
-
-# 3. (Optional but recommended) Add a free Groq API key for live explanations
-export GROQ_API_KEY="your_key_here"   # https://console.groq.com
-
-# 4. Run the app
-python3 app/app.py
-# open http://localhost:5000
+# run the app
+python app/main.py
 ```
 
-Works without a Groq key too — falls back to a deterministic rule-based explanation so the demo never breaks live.
+The app will be available at `http://127.0.0.1:5000`.
 
-## Model results (held-out test set, see `model/metrics.json` for the full run)
+## Deployment
 
-- Deployed policy: flag the riskiest ~15% of accounts per review cycle (capacity-constrained, not accuracy-optimized)
-- Precision ~25%, Recall ~37% at that operating point
-- Estimated savings vs. flagging nobody: **~₹25 lakh** on the test set alone, under the stated cost assumptions
-- A naive "minimize raw cost" threshold was also computed and *rejected* — it flagged ~98% of all accounts, which is not operationally reviewable. This tradeoff is documented in `model/train_model.py` and is one of the strongest technical talking points for the panel.
+Deployed on **Render** as a Gunicorn-served Flask app.
 
-**Be honest about this in the pitch**: precision and recall here are modest, and that's the correct, honest answer for a genuinely noisy risk signal on synthetic data — not a number to inflate. The panel explicitly said they want honest metrics, not a demo that "just looks good."
+```
+# Procfile
+web: gunicorn app.main:app
+```
 
-## Known limitations (say these out loud, don't wait to be asked)
+Environment variables (Groq API key, etc.) are set in the Render dashboard, not hardcoded in source. `runtime.txt` pins the Python version for build compatibility.
 
-- Labels are **rule-based synthetic ground truth**, not real Razorpay freeze data (which is private). The pipeline is built so real anonymized data could drop in directly if access were granted.
-- Feature set (12 fields) is a reasonable proxy for documented freeze triggers, not an exhaustive one.
-- Precision at ~25% means roughly 3 in 4 flagged accounts are false positives — acceptable given the ~300x cost asymmetry between a wasted review and a missed freeze, but worth stating plainly rather than hiding behind the recall number.
+---
 
-## What broke, and how it was fixed (for the "what went wrong" panel question)
+## Business impact projection
 
-1. **Naive cost-minimization threshold flagged 98% of accounts.** Early version chose the decision threshold by pure expected-cost minimization. Mathematically "optimal" given the assumed 300x cost asymmetry, but operationally absurd — no compliance team can review 98% of a merchant base. Fixed by switching to a review-capacity-constrained threshold (top-K% by risk score) — a more realistic model of how real risk teams actually operate. The dashboard's interactive slider now lets a panel see this tradeoff for themselves instead of taking the claim on faith.
-2. **App crashed on missing `groq` package/API key.** First version hard-imported the Groq client and had no fallback — meaning a live demo with no internet or an unset key would crash mid-pitch. Fixed with a try/except import guard and a deterministic rule-based fallback explanation, so the app degrades gracefully instead of failing.
-3. **Random sample merchants sometimes gave a boring demo** (no clearly-flagged case in the random sample shown). Fixed by explicitly surfacing the top-3 and bottom-3 scoring merchants for the walkthrough, rather than a random draw.
-4. **Global feature importance looked the same for every merchant.** The first explainability pass showed identical "top factors" regardless of which account was being assessed — which isn't really an explanation, it's a static list. Replaced with per-merchant SHAP contributions (TreeExplainer), so two flagged merchants now visibly show different reasons, with a z-score-weighted fallback if SHAP isn't available in the runtime.
+The Business Impact panel extrapolates test-set results to a configurable merchant base and review-cycle frequency. All derived numbers (accounts reviewed, savings per cycle) come directly from the held-out test set's validated precision/recall — only the merchant base size and cycle frequency are user-controlled assumptions. This is explicitly labeled as an honest projection, not a claim about Razorpay's actual scale, since real merchant base size and freeze-cost figures aren't public.
+
+**Proposed production integration (not yet built):** score the full merchant base as a nightly batch job reusing the existing `/api/batch-assess` endpoint, surface flagged accounts into the compliance team's existing review queue, and re-run scoring at KYC-document-update time so a merchant's risk score updates the moment they fix something — closing the loop between "flagged" and "resolved."
+
+---
+
+## Build challenges & what broke
+
+The build had one serious near-failure. After two full days of steady progress, on the night before submission, the trained model stopped loading entirely — the app returned a blank page with no error trace, and hours of debugging (including AI-assisted troubleshooting) couldn't isolate the root cause in time.
+
+The next day was also committed to an in-person Smart India Hackathon project review (8 AM–5 PM), leaving no dedicated block of time to fix it. Rather than lose the day, the model was rebuilt from scratch in short bursts during breaks throughout the review. By early evening, focused work resumed and the model was fully functional again by 9:15 PM, with the complete submission (code, README, demo video) finished by 11:15 PM the same night.
+
+**Other technical obstacles:**
+
+- **Threshold selection:** an early naive, cost-minimizing threshold flagged ~98% of all accounts — statistically "optimal" but operationally meaningless. This was replaced with a capacity-constrained policy (top 15% per cycle) matching realistic compliance team review throughput.
+- **No real-world training data:** compliance-freeze data isn't publicly available, so synthetic data generation had to be carefully designed so feature correlations mirrored realistic risk patterns rather than random noise that a model could trivially memorize.
+- **LLM explanation reliability:** Groq API calls occasionally failed or rate-limited mid-session, which would otherwise have left some merchants without any explanation. A rule-based fallback explainer was built to guarantee every flagged merchant always receives a usable, auditable explanation regardless of LLM availability.
+- **Small-subgroup fairness noise:** certain segments (e.g., international transaction share > 30%, n=8) produced fairness ratios that looked extreme purely due to tiny sample size. Rather than hide this, the fairness panel explicitly warns against over-interpreting small-n ratios as proof of bias.
+
+**Key lesson:** the model file had no version control or backup — a single unexplained crash cost an entire day's buffer. Proper artifact versioning (e.g., checkpointing trained models with timestamps, or committing `.pkl` files at each stable milestone) is the top priority fix for any future iteration of this project.
+
+---
+
+## Limitations
+
+- Trained entirely on synthetic data — real-world validation against actual Razorpay merchant data has not been performed.
+- Precision (25.3%) and recall (36.5%) at the deployed threshold mean the majority of flags are false positives, and a majority of true freeze cases are currently missed — an intentional tradeoff given review capacity constraints, but one that would need improvement (e.g., cost-sensitive learning, ensembling, richer features) before any real deployment.
+- Fairness analysis is a point-in-time audit on a static test set, not a continuously monitored production system.
+
+---
+
+## Contributors
+
+- **Dakshraj Singh Ch...** — [DakshrajKurki](https://github.com/DakshrajKurki)
+
+---
+
+Built with Flask · scikit-learn · Groq · Random Forest (300 trees) · trained on 6,000 synthetic merchant snapshots.
+
+*Freeze-Risk Guardian — Razorpay AI Buildathon 2026, Track 02: AI Risk Manager*
