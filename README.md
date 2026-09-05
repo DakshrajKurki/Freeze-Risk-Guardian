@@ -5,8 +5,8 @@
 
 Predicting compliance-driven merchant account freezes and reserve holds *before* they happen — and explaining, in plain language, what a merchant needs to fix.
 
-🔗 **Live demo:** [Add your Render URL here]
-🎥 **Video walkthrough:** [Add your video link here]
+🔗 **Live demo:** https://freeze-risk-guardian-production.up.railway.app/
+🎥 **Video walkthrough:** https://drive.google.com/file/d/1fDtz8jjMkQD_IwekbLhf4BD8sZRZ8LG-/view?usp=share_link
 
 ---
 
