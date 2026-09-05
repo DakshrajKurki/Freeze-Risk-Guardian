@@ -79,13 +79,3 @@ Works without a Groq key too — falls back to a deterministic rule-based explan
 2. **App crashed on missing `groq` package/API key.** First version hard-imported the Groq client and had no fallback — meaning a live demo with no internet or an unset key would crash mid-pitch. Fixed with a try/except import guard and a deterministic rule-based fallback explanation, so the app degrades gracefully instead of failing.
 3. **Random sample merchants sometimes gave a boring demo** (no clearly-flagged case in the random sample shown). Fixed by explicitly surfacing the top-3 and bottom-3 scoring merchants for the walkthrough, rather than a random draw.
 4. **Global feature importance looked the same for every merchant.** The first explainability pass showed identical "top factors" regardless of which account was being assessed — which isn't really an explanation, it's a static list. Replaced with per-merchant SHAP contributions (TreeExplainer), so two flagged merchants now visibly show different reasons, with a z-score-weighted fallback if SHAP isn't available in the runtime.
-
-## Suggested 5-minute pitch structure
-
-1. (30s) The real problem — cite the documented pain point, not a hypothetical
-2. (30s) Why it's a gap, not already solved (contrast with Vulcan/chargeback agent/subscription recovery)
-3. (90s) Live demo — flag a risky merchant, show the SHAP explanation + checklist, switch to a safe merchant to show the contrast, show the audit log
-4. (60s) The threshold-selection tradeoff — drag the live slider from the deployed 15%-capacity point down toward the naive cost-optimal point and watch the confusion matrix explode. This is your strongest technical-depth moment
-5. (45s) Batch upload — score a portfolio of 25 merchants at once, show the risk distribution
-6. (45s) Limitations, honestly stated, and what real data access would unlock
-7. (30s) What broke and how you fixed it
