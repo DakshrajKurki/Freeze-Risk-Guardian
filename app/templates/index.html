@@ -10,43 +10,108 @@
     --accent-dark: #0c2651; --danger: #f85149; --safe: #3fb950; --blue: #0d94fb;
   }
   * { box-sizing: border-box; }
+  html, body { height: 100%; }
   body {
-    background: radial-gradient(ellipse 1200px 600px at 50% -10%, rgba(13,148,251,0.10), transparent), var(--bg);
-    color: var(--text);
+    background: var(--bg); color: var(--text);
     font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
-    margin: 0; padding: 32px 24px 100px;
-    -webkit-font-smoothing: antialiased;
+    margin: 0; -webkit-font-smoothing: antialiased;
   }
-  .wrap { max-width: 1200px; margin: 0 auto; }
-  h1 {
-    font-size: 1.7rem; margin-bottom: 4px; letter-spacing: -0.02em; text-align: center;
-    background: linear-gradient(135deg, #fff, #0d94fb 140%);
-    -webkit-background-clip: text; background-clip: text; color: transparent;
+  a { color: var(--accent); }
+
+  /* ---------- App shell: sidebar + main ---------- */
+  .app-shell { display: flex; min-height: 100vh; }
+  .sidebar {
+    width: 250px; flex-shrink: 0; background: #080c14; border-right: 1px solid var(--border);
+    display: flex; flex-direction: column; padding: 18px 14px; position: sticky; top: 0; height: 100vh; overflow-y: auto;
   }
-  .subtitle { color: var(--muted); margin-bottom: 8px; font-size: 0.95rem; text-align: center; }
-  .tabs-label { text-align: center; }
-  .tabs-label {
-    font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted);
-    margin: 6px 0 8px 2px; font-weight: 600;
+  .sidebar-header { display: flex; align-items: center; gap: 10px; padding: 6px 6px 18px; border-bottom: 1px solid var(--border); margin-bottom: 14px; }
+  .brand-icon { font-size: 1.6rem; }
+  .brand-title { font-size: 0.95rem; font-weight: 700; line-height: 1.2; }
+  .brand-badge { font-size: 0.62rem; color: var(--accent); background: rgba(13,148,251,0.12); padding: 2px 6px; border-radius: 4px; display: inline-block; margin-top: 3px; }
+  .nav-section-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 12px 8px 6px; font-weight: 600; }
+  .nav-divider { height: 1px; background: var(--border); margin: 8px 4px; }
+  .nav-item {
+    display: block; width: 100%; text-align: left; background: none; border: none; color: var(--muted);
+    padding: 10px 12px; border-radius: 8px; font-size: 0.85rem; cursor: pointer; margin-bottom: 2px;
+    transition: background 0.15s ease, color 0.15s ease, transform 0.1s ease;
   }
-  .tabs-group:first-of-type { margin-top: 18px; }
-  .tabs-group:first-of-type .tabs-label { margin-top: 4px; }
-  .tabs-group:last-of-type { margin-top: 22px; padding-top: 16px; border-top: 1px solid var(--border); }
-  .tabs-group:last-of-type .tabs { border-bottom: 1px solid var(--border); padding-bottom: 4px; margin-bottom: 24px; }
-  .tab-btn {
-    background: none; border: none; color: var(--muted); padding: 9px 13px;
-    cursor: pointer; font-size: 0.82rem; border-bottom: 2px solid transparent; white-space: nowrap;
-    border-radius: 6px 6px 0 0;
-    transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease, transform 0.1s ease;
+  .nav-item:hover { background: rgba(13,148,251,0.08); color: var(--text); }
+  .nav-item:active { transform: scale(0.98); }
+  .nav-item.active { background: linear-gradient(135deg, #3aa8ff, var(--accent)); color: #04101f; font-weight: 600; }
+  .sidebar-footer { margin-top: auto; padding-top: 14px; display: flex; flex-direction: column; gap: 10px; }
+  .status-card { background: rgba(13,148,251,0.06); border: 1px solid rgba(13,148,251,0.2); border-radius: 10px; padding: 10px 12px; font-size: 0.78rem; }
+  .status-row { display: flex; align-items: center; gap: 6px; font-weight: 600; color: var(--accent); margin-bottom: 4px; }
+  .status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--safe); box-shadow: 0 0 6px var(--safe); display: inline-block; }
+  .status-sub { color: var(--muted); font-size: 0.72rem; line-height: 1.4; }
+  .help-card {
+    display: flex; align-items: center; gap: 10px; background: var(--panel); border: 1px solid var(--border);
+    border-radius: 10px; padding: 10px; cursor: pointer; text-align: left; color: var(--text);
+    transition: border-color 0.15s ease, transform 0.1s ease;
   }
-  .tab-btn:hover { color: var(--text); background: rgba(13,148,251,0.06); }
-  .tab-btn:active { transform: scale(0.94); }
-  .tabs { display: flex; gap: 4px; margin: 0 0 4px 0; flex-wrap: wrap; justify-content: center; }
-  .tab-btn:hover { color: var(--text); }
-  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .help-card:hover { border-color: var(--accent); }
+  .help-card:active { transform: scale(0.98); }
+  .help-icon { font-size: 1.2rem; }
+  .help-sub { font-size: 0.72rem; color: var(--muted); }
+  .help-arrow { margin-left: auto; color: var(--accent); }
+
+  .main-content { flex: 1; padding: 24px 28px 80px; min-width: 0; }
+  .content-header { margin-bottom: 20px; }
+  .header-eyebrow { color: var(--accent); font-size: 0.95rem; font-weight: 500; }
+  .header-sub { color: var(--muted); font-size: 0.8rem; margin-top: 2px; }
+
   .tab-panel { display: none; animation: fadeIn 0.25s ease; }
   .tab-panel.active { display: block; }
   @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* ---------- Hero ---------- */
+  .hero-banner {
+    background: radial-gradient(ellipse 800px 300px at 30% 0%, rgba(13,148,251,0.16), transparent), var(--panel);
+    border: 1px solid var(--border); border-radius: 14px; padding: 28px; margin-bottom: 20px;
+  }
+  .hero-eyebrow { color: var(--accent); font-size: 0.72rem; letter-spacing: 0.1em; font-weight: 700; margin-bottom: 6px; }
+  .hero-title {
+    font-size: 1.9rem; margin: 0 0 10px; letter-spacing: -0.02em;
+    background: linear-gradient(135deg, #fff, #0d94fb 140%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .hero-desc { color: var(--muted); font-size: 0.9rem; max-width: 560px; line-height: 1.6; margin-bottom: 18px; }
+  .hero-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+  .secondary-btn { background: #141b28; color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 10px 16px; font-size: 0.88rem; cursor: pointer; }
+  .secondary-btn:hover { border-color: var(--accent); }
+
+  /* ---------- Stat cards ---------- */
+  .stat-cards { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 20px; }
+  .stat-card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+  .stat-card-top { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+  .stat-icon { width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 0.95rem; flex-shrink: 0; }
+  .stat-label { font-size: 0.72rem; color: var(--muted); }
+  .stat-value { font-size: 1.5rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .stat-sub { font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
+  .stat-accent-bar { height: 3px; border-radius: 2px; margin-top: 12px; }
+
+  /* ---------- Dashboard analysis grid ---------- */
+  .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 20px; align-items: stretch; }
+  .dash-panel h2 { color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.72rem; margin: 0 0 14px; }
+  .panel-sub { color: var(--muted); text-transform: none; font-weight: 400; letter-spacing: 0; font-size: 0.7rem; }
+
+  .donut-wrap { display: flex; align-items: center; gap: 16px; }
+  .donut-legend { font-size: 0.8rem; }
+  .legend-row { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
+  .legend-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+  .legend-val { color: var(--muted); font-size: 0.72rem; margin-left: 15px; }
+
+  .cm-mini-grid { display: grid; grid-template-columns: auto 1fr 1fr; gap: 6px; font-size: 0.72rem; }
+  .cm-mini-cell { padding: 12px 8px; border-radius: 8px; text-align: center; }
+  .cm-mini-val { font-size: 1.15rem; font-weight: 700; display: block; }
+  .cm-axis-label { display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 0.68rem; writing-mode: vertical-rl; text-orientation: mixed; }
+  .cm-col-label { text-align: center; color: var(--muted); font-size: 0.65rem; padding-bottom: 2px; }
+
+  .driver-row { margin-bottom: 10px; }
+  .driver-label-row { display: flex; justify-content: space-between; font-size: 0.75rem; margin-bottom: 3px; }
+  .driver-bar-track { background: #141b28; height: 7px; border-radius: 4px; overflow: hidden; }
+  .driver-bar-fill { height: 100%; background: linear-gradient(90deg, var(--accent-dark), var(--accent)); }
+
+  /* ---------- Shared component styles (panels, buttons, tables etc) ---------- */
   .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
   .panel {
     background: rgba(14,20,32,0.85); border: 1px solid var(--border);
@@ -67,7 +132,7 @@
   input[type=text]:focus, select:focus { outline: none; border-color: var(--accent); }
   button.primary { background: linear-gradient(135deg, #3aa8ff, var(--accent)); color: #04101f; border: none; font-weight: 600; }
   button.primary:hover { opacity: 0.92; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(13,148,251,0.3); }
-  button.primary:active { transform: translateY(0); }
+  button.primary:active { transform: translateY(0) scale(0.97); }
   button.small { padding: 5px 10px; font-size: 0.78rem; }
   .score-badge { display: inline-flex; align-items: center; gap: 10px; padding: 5px 14px; border-radius: 20px; font-weight: 700; font-size: 1.1rem; margin: 10px 0; font-variant-numeric: tabular-nums; }
   .flagged { background: rgba(248,81,73,0.15); color: var(--danger); box-shadow: 0 0 0 1px rgba(248,81,73,0.2); }
@@ -105,44 +170,20 @@
   .compare-card:hover { border-color: var(--accent); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
   .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; margin-right: 8px; vertical-align: -2px; }
   @keyframes spin { to { transform: rotate(360deg); } }
-  /* Chatbot widget */
-  #chat-fab {
-    position: fixed; bottom: 24px; right: 24px; width: 56px; height: 56px; border-radius: 50%;
-    background: linear-gradient(135deg, #3aa8ff, var(--accent)); color: #04101f; border: none; font-size: 1.3rem; cursor: pointer;
-    box-shadow: 0 4px 20px rgba(13,148,251,0.4); z-index: 50; transition: transform 0.15s ease;
-  }
-  #chat-fab:hover { transform: scale(1.06); }
-  @keyframes gentleBounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
-  #chat-fab.bouncing { animation: gentleBounce 2.4s ease-in-out infinite; }
-  #chat-fab.bouncing:hover { animation-play-state: paused; }
-  #chat-teaser {
-    position: fixed; bottom: 92px; right: 24px; max-width: 220px;
-    background: rgba(14,20,32,0.92); border: 1px solid var(--border); border-radius: 12px;
-    padding: 10px 14px; font-size: 0.8rem; line-height: 1.4; color: var(--text);
-    box-shadow: 0 8px 24px rgba(0,0,0,0.4); z-index: 49; cursor: pointer;
-    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
-    animation: teaserIn 0.35s ease;
-  }
-  #chat-teaser::after {
-    content: ""; position: absolute; bottom: -7px; right: 22px;
-    width: 12px; height: 12px; background: rgba(14,20,32,0.92);
-    border-right: 1px solid var(--border); border-bottom: 1px solid var(--border);
-    transform: rotate(45deg);
-  }
-  #chat-teaser .teaser-close {
-    position: absolute; top: 4px; right: 6px; font-size: 0.7rem; color: var(--muted);
-    background: none; border: none; cursor: pointer; padding: 2px 4px;
-  }
-  @keyframes teaserIn { from { opacity: 0; transform: translateY(6px) scale(0.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+  footer.app-footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--border); text-align: center; }
+
+  /* Chat panel (opened via sidebar "Need Help" card) */
   #chat-panel {
-    position: fixed; bottom: 92px; right: 24px; width: 360px; max-width: calc(100vw - 48px);
-    height: 460px; background: rgba(14,20,32,0.75); border: 1px solid var(--border); border-radius: 14px;
+    position: fixed; bottom: 24px; right: 24px; width: 360px; max-width: calc(100vw - 48px);
+    height: 460px; background: rgba(14,20,32,0.9); border: 1px solid var(--border); border-radius: 14px;
     display: none; flex-direction: column; overflow: hidden; z-index: 50; box-shadow: 0 12px 40px rgba(0,0,0,0.55);
     animation: fadeIn 0.2s ease;
     backdrop-filter: blur(20px) saturate(140%); -webkit-backdrop-filter: blur(20px) saturate(140%);
   }
   #chat-panel.open { display: flex; }
-  #chat-header { padding: 12px 14px; border-bottom: 1px solid var(--border); font-size: 0.85rem; font-weight: 600; color: var(--accent); }
+  #chat-header { padding: 12px 14px; border-bottom: 1px solid var(--border); font-size: 0.85rem; font-weight: 600; color: var(--accent); display: flex; justify-content: space-between; align-items: center; }
+  #chat-close-btn { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 0.9rem; }
   #chat-messages { flex: 1; overflow-y: auto; padding: 12px; font-size: 0.82rem; }
   .chat-msg { margin-bottom: 10px; line-height: 1.45; }
   .chat-msg.user { color: var(--text); text-align: right; }
@@ -150,189 +191,253 @@
   .chat-msg .role-label { font-size: 0.68rem; color: var(--muted); display: block; margin-bottom: 2px; }
   #chat-input-row { display: flex; gap: 6px; padding: 10px; border-top: 1px solid var(--border); }
   #chat-input { flex: 1; background: rgba(20,27,40,0.7); }
+
+  @media (max-width: 900px) {
+    .stat-cards { grid-template-columns: repeat(2, 1fr); }
+    .dashboard-grid { grid-template-columns: 1fr; }
+    .app-shell { flex-direction: column; }
+    .sidebar { width: 100%; height: auto; position: static; flex-direction: row; overflow-x: auto; }
+    .sidebar-footer { display: none; }
+  }
 </style>
 </head>
 <body>
-<div class="wrap">
-  <h1>Freeze-Risk Guardian</h1>
-  <div class="subtitle">Predicting compliance-driven account holds before they happen — Razorpay AI Buildathon, Track 02</div>
+<div class="app-shell">
 
-  <div class="tabs-group">
-    <div class="tabs-label">Workflow</div>
-    <div class="tabs">
-      <button class="tab-btn active" data-tab="assess">🔍 Assess a Merchant</button>
-      <button class="tab-btn" data-tab="simulator">🎚 What-If Simulator</button>
-      <button class="tab-btn" data-tab="compare">⚖️ Compare Merchants</button>
-      <button class="tab-btn" data-tab="batch">📁 Batch Upload</button>
-    </div>
-  </div>
-  <div class="tabs-group">
-    <div class="tabs-label">Model Insights</div>
-    <div class="tabs">
-      <button class="tab-btn" data-tab="performance">📈 Model Performance</button>
-      <button class="tab-btn" data-tab="tradeoff">📊 Threshold Tradeoff</button>
-      <button class="tab-btn" data-tab="fairness">🎯 Fairness Check</button>
-      <button class="tab-btn" data-tab="impact">💰 Business Impact</button>
-      <button class="tab-btn" data-tab="audit">🧾 Audit Trail</button>
-    </div>
-  </div>
-
-  <!-- ASSESS -->
-  <div class="tab-panel active" id="tab-assess">
-    <div class="panel">
-      <h2>Assess a Merchant</h2>
-      <div class="top-controls">
-        <select id="merchant-select"><option>Loading sample merchants…</option></select>
-        <button class="primary" id="assess-btn">Assess Risk</button>
-        <label class="toggle-row"><input type="checkbox" id="style-toggle"> Technical explanation (for compliance team, not merchant)</label>
-      </div>
-      <div id="result"></div>
-      <button class="small" id="download-report-btn" style="display:none; margin-top:14px;">⬇ Download Report (PDF)</button>
-    </div>
-  </div>
-
-  <!-- WHAT-IF SIMULATOR -->
-  <div class="tab-panel" id="tab-simulator">
-    <div class="panel">
-      <h2>What-If Simulator</h2>
-      <p style="color:var(--muted); font-size:0.85rem;">Drag any slider — the risk score updates live, before you'd even click "Assess." Note: maxing out every slider at once creates a merchant profile unlike anything in training data — random forests respond conservatively to combinations they've never seen together, which is honest model behavior, not a bug.</p>
-      <div class="score-badge" id="sim-badge" style="margin-top:10px;"><span id="sim-grade" class="grade-pill">-</span><span id="sim-score-text">Move a slider to begin</span></div>
-      <div class="sim-grid">
-        <div id="sim-sliders-left"></div>
-        <div id="sim-sliders-right"></div>
+  <!-- ============ SIDEBAR ============ -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="brand-icon">🛡️</div>
+      <div>
+        <div class="brand-title">Freeze-Risk<br>Guardian</div>
+        <div class="brand-badge">AI Risk Manager</div>
       </div>
     </div>
-  </div>
-
-  <!-- COMPARE -->
-  <div class="tab-panel" id="tab-compare">
-    <div class="panel">
-      <h2>Compare Merchants</h2>
-      <div class="top-controls">
-        <select id="compare-a"></select>
-        <span style="color:var(--muted);">vs</span>
-        <select id="compare-b"></select>
-        <button class="primary" id="compare-btn">Compare</button>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Workflow</div>
+      <button class="nav-item active" data-tab="assess">🔍 Assess a Merchant</button>
+      <button class="nav-item" data-tab="simulator">🎚 What-If Simulator</button>
+      <button class="nav-item" data-tab="compare">⚖️ Compare Merchants</button>
+      <button class="nav-item" data-tab="batch">📁 Batch Upload</button>
+      <div class="nav-divider"></div>
+      <div class="nav-section-label">Model Insights</div>
+      <button class="nav-item" data-tab="performance">📈 Model Performance</button>
+      <button class="nav-item" data-tab="tradeoff">📊 Threshold Tradeoff</button>
+      <button class="nav-item" data-tab="fairness">🎯 Fairness Check</button>
+      <button class="nav-item" data-tab="impact">💰 Business Impact</button>
+      <button class="nav-item" data-tab="audit">🧾 Audit Trail</button>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="status-card">
+        <div class="status-row"><span class="status-dot"></span> Model Status: Online</div>
+        <div class="status-sub">Model loaded successfully</div>
+        <div class="status-sub" id="model-loaded-time">Page loaded just now</div>
       </div>
-      <div class="compare-grid" id="compare-result"></div>
+      <button class="help-card" id="sidebar-chat-btn">
+        <span class="help-icon">⚡</span>
+        <span><strong>Need Help?</strong><br><span class="help-sub">Chat with Blade AI Risk Assistant</span></span>
+        <span class="help-arrow">→</span>
+      </button>
     </div>
-  </div>
+  </aside>
 
-  <!-- TRADEOFF -->
-  <div class="tab-panel" id="tab-tradeoff">
-    <div class="panel">
-      <h2>Live Threshold Tradeoff</h2>
-      <p style="color:var(--muted); font-size:0.85rem;">A naive cost-minimization threshold flags ~98% of accounts — mathematically "optimal," operationally useless. Drag the slider to see why the deployed policy caps review volume instead.</p>
-      <div class="slider-row">
-        <input type="range" id="threshold-slider" min="0" max="90" value="45" step="1">
-        <div class="metric-row"><span>Threshold</span><strong id="th-value">-</strong></div>
-      </div>
-      <div class="grid">
-        <div>
-          <div class="metric-row"><span>Precision</span><strong id="th-precision">-</strong></div>
-          <div class="metric-row"><span>Recall</span><strong id="th-recall">-</strong></div>
-          <div class="metric-row"><span>F1</span><strong id="th-f1">-</strong></div>
-          <div class="metric-row"><span>Flag rate</span><strong id="th-flagrate">-</strong></div>
-          <div class="metric-row"><span>Estimated savings</span><strong id="th-savings">-</strong></div>
+  <!-- ============ MAIN CONTENT ============ -->
+  <main class="main-content">
+    <div class="content-header">
+      <div class="header-eyebrow">Predicting compliance-driven account holds before they happen</div>
+      <div class="header-sub">Razorpay AI Buildathon 2026 · Track 02: AI Risk Manager</div>
+    </div>
+
+    <!-- ===== ASSESS (includes the dashboard overview) ===== -->
+    <div class="tab-panel active" id="tab-assess">
+
+      <section class="hero-banner">
+        <div class="hero-eyebrow">WELCOME BACK</div>
+        <h1 class="hero-title">Freeze-Risk Guardian</h1>
+        <p class="hero-desc">AI-powered risk assessment for compliance-driven account holds. Identify high-risk merchants, understand the why, and take action before freezes happen.</p>
+        <div class="hero-actions">
+          <button class="primary" onclick="document.getElementById('assess-form-anchor').scrollIntoView({behavior:'smooth'})">Assess a Merchant →</button>
+          <button class="secondary-btn" onclick="document.querySelector('[data-tab=simulator]').click()">🎚 What-If Simulator</button>
         </div>
-        <div class="cm-grid" id="th-cm"></div>
+      </section>
+
+      <section class="stat-cards" id="dashboard-stats">
+        <div class="stat-card"><div class="stat-card-top"><div class="stat-icon" style="background:rgba(147,112,219,0.15); color:#b18cff;">📈</div><span class="stat-label">Model ROC-AUC</span></div><div class="stat-value" id="stat-auc">-</div><div class="stat-sub" id="stat-auc-sub">-</div><div class="stat-accent-bar" style="background:linear-gradient(90deg,#6a3fd6,#b18cff);"></div></div>
+        <div class="stat-card"><div class="stat-card-top"><div class="stat-icon" style="background:rgba(13,148,251,0.15); color:var(--accent);">🎯</div><span class="stat-label">Precision (at threshold)</span></div><div class="stat-value" id="stat-precision">-</div><div class="stat-sub">Positive Predictive Value</div><div class="stat-accent-bar" style="background:linear-gradient(90deg,#0c2651,var(--accent));"></div></div>
+        <div class="stat-card"><div class="stat-card-top"><div class="stat-icon" style="background:rgba(63,185,80,0.15); color:var(--safe);">🔁</div><span class="stat-label">Recall (at threshold)</span></div><div class="stat-value" id="stat-recall">-</div><div class="stat-sub">True Positive Rate</div><div class="stat-accent-bar" style="background:linear-gradient(90deg,#1e6b30,var(--safe));"></div></div>
+        <div class="stat-card"><div class="stat-card-top"><div class="stat-icon" style="background:rgba(210,153,34,0.15); color:#d29922;">₹</div><span class="stat-label">Est. Savings (Test Set)</span></div><div class="stat-value" id="stat-savings">-</div><div class="stat-sub">vs. flagging nobody</div><div class="stat-accent-bar" style="background:linear-gradient(90deg,#7a5a10,#d29922);"></div></div>
+        <div class="stat-card"><div class="stat-card-top"><div class="stat-icon" style="background:rgba(148,163,184,0.15); color:#94a3b8;">🛡️</div><span class="stat-label">Deployment Policy</span></div><div class="stat-value" id="stat-policy">-</div><div class="stat-sub">Capacity-Constrained</div><div class="stat-accent-bar" style="background:linear-gradient(90deg,#3a4a5c,#94a3b8);"></div></div>
+      </section>
+
+      <section class="dashboard-grid">
+        <div class="panel dash-panel">
+          <h2>Risk Distribution <span class="panel-sub">(Test Set)</span></h2>
+          <div id="donut-container">Loading…</div>
+        </div>
+        <div class="panel dash-panel">
+          <h2>Confusion Matrix <span class="panel-sub">(Test Set)</span></h2>
+          <div id="cm-container">Loading…</div>
+        </div>
+        <div class="panel dash-panel">
+          <h2>Top Risk Drivers <span class="panel-sub">(Global Importance)</span></h2>
+          <div id="drivers-container">Loading…</div>
+        </div>
+      </section>
+
+      <div class="panel" id="assess-form-anchor">
+        <h2>Assess an Individual Merchant</h2>
+        <div class="top-controls">
+          <select id="merchant-select"><option>Loading sample merchants…</option></select>
+          <button class="primary" id="assess-btn">Assess Risk</button>
+          <label class="toggle-row"><input type="checkbox" id="style-toggle"> Technical explanation (for compliance team, not merchant)</label>
+        </div>
+        <div id="result"></div>
+        <button class="small" id="download-report-btn" style="display:none; margin-top:14px;">⬇ Download Report (PDF)</button>
       </div>
     </div>
-  </div>
 
-  <!-- PERFORMANCE -->
-  <div class="tab-panel" id="tab-performance">
-    <div class="grid">
+    <!-- ===== WHAT-IF SIMULATOR ===== -->
+    <div class="tab-panel" id="tab-simulator">
       <div class="panel">
-        <h2>Deployed Model — Held-Out Test Set</h2>
-        <div id="metrics"></div>
+        <h2>What-If Simulator</h2>
+        <p style="color:var(--muted); font-size:0.85rem;">Drag any slider — the risk score updates live, before you'd even click "Assess." Note: maxing out every slider at once creates a merchant profile unlike anything in training data — random forests respond conservatively to combinations they've never seen together, which is honest model behavior, not a bug.</p>
+        <div class="score-badge" id="sim-badge" style="margin-top:10px;"><span id="sim-grade" class="grade-pill">-</span><span id="sim-score-text">Move a slider to begin</span></div>
+        <div class="sim-grid">
+          <div id="sim-sliders-left"></div>
+          <div id="sim-sliders-right"></div>
+        </div>
       </div>
+    </div>
+
+    <!-- ===== COMPARE ===== -->
+    <div class="tab-panel" id="tab-compare">
       <div class="panel">
-        <h2>ROC Curve (AUC <span id="roc-auc">-</span>)</h2>
-        <svg id="roc-svg" viewBox="0 0 300 300" style="width:100%; max-width:300px; height:auto; aspect-ratio:1/1;"></svg>
+        <h2>Compare Merchants</h2>
+        <div class="top-controls">
+          <select id="compare-a"></select>
+          <span style="color:var(--muted);">vs</span>
+          <select id="compare-b"></select>
+          <button class="primary" id="compare-btn">Compare</button>
+        </div>
+        <div class="compare-grid" id="compare-result"></div>
       </div>
     </div>
-  </div>
 
-  <!-- BATCH -->
-  <div class="tab-panel" id="tab-fairness">
-    <div class="panel">
-      <h2>Fairness Check — Segment-Level Analysis</h2>
-      <p id="fairness-methodology" style="color:var(--muted); font-size:0.85rem;">Loading…</p>
-      <div id="fairness-result"></div>
-    </div>
-  </div>
-
-  <div class="tab-panel" id="tab-batch">
-    <div class="panel">
-      <h2>Batch Portfolio Assessment</h2>
-      <div class="top-controls">
-        <a href="/api/sample-batch-csv" style="color:var(--blue); font-size:0.85rem;">Download sample CSV</a>
-        <input type="file" id="batch-file" accept=".csv">
-        <button class="primary" id="batch-btn">Score Batch</button>
-        <button class="small" id="export-batch-btn" style="display:none;">⬇ Export Results CSV</button>
+    <!-- ===== BATCH ===== -->
+    <div class="tab-panel" id="tab-batch">
+      <div class="panel">
+        <h2>Batch Portfolio Assessment</h2>
+        <div class="top-controls">
+          <a href="/api/sample-batch-csv" style="color:var(--blue); font-size:0.85rem;">Download sample CSV</a>
+          <input type="file" id="batch-file" accept=".csv">
+          <button class="primary" id="batch-btn">Score Batch</button>
+          <button class="small" id="export-batch-btn" style="display:none;">⬇ Export Results CSV</button>
+        </div>
+        <div id="batch-result"></div>
       </div>
-      <div id="batch-result"></div>
     </div>
-  </div>
 
-  <!-- AUDIT -->
-  <div class="tab-panel" id="tab-impact">
-    <div class="panel">
-      <h2>Business Impact Projection</h2>
-      <p style="color:var(--muted); font-size:0.85rem;">
-        Your test set proved this model catches real freeze risk on 1,500 accounts. This panel projects
-        that result to Razorpay's actual scale — <strong>you control the assumption</strong>, since the
-        real merchant base size and freeze-cost figures aren't public. This is honest extrapolation, not a claim.
-      </p>
-      <div class="top-controls" style="margin-top:16px;">
-        <label style="font-size:0.85rem; color:var(--muted);">Total merchant base:</label>
-        <input type="text" id="impact-merchant-base" value="100000" style="width:120px;">
-        <label style="font-size:0.85rem; color:var(--muted);">Review cycles per year:</label>
-        <input type="text" id="impact-cycles" value="12" style="width:60px;">
-        <button class="primary" id="impact-calc-btn">Project Impact</button>
+    <!-- ===== MODEL PERFORMANCE ===== -->
+    <div class="tab-panel" id="tab-performance">
+      <div class="grid">
+        <div class="panel">
+          <h2>Deployed Model — Held-Out Test Set</h2>
+          <div id="metrics"></div>
+        </div>
+        <div class="panel">
+          <h2>ROC Curve (AUC <span id="roc-auc">-</span>)</h2>
+          <svg id="roc-svg" viewBox="0 0 300 300" style="width:100%; max-width:300px; height:auto; aspect-ratio:1/1;"></svg>
+        </div>
       </div>
-      <div id="impact-result" style="margin-top:20px;"></div>
-      <div class="panel" style="margin-top:16px; background:#0d1117;">
-        <h2 style="margin-top:0;">How this would actually integrate</h2>
-        <p style="font-size:0.85rem; line-height:1.6;">
-          This is a proposal, not a built integration: score the full merchant base as a nightly batch job
-          (reusing the exact <code>/api/batch-assess</code> endpoint already in this app), surface flagged
-          accounts to the compliance team's existing review queue, and re-run the What-If Simulator's logic
-          at KYC-document-update time so a merchant's risk score updates the moment they fix something —
-          closing the loop between "flagged" and "resolved" instead of leaving merchants guessing.
+    </div>
+
+    <!-- ===== THRESHOLD TRADEOFF ===== -->
+    <div class="tab-panel" id="tab-tradeoff">
+      <div class="panel">
+        <h2>Live Threshold Tradeoff</h2>
+        <p style="color:var(--muted); font-size:0.85rem;">
+          A naive cost-minimization threshold flags ~98% of accounts — mathematically "optimal," operationally useless. Drag the slider to see why the deployed policy caps review volume instead.
         </p>
+        <div class="slider-row">
+          <input type="range" id="threshold-slider" min="0" max="90" value="45" step="1">
+          <div class="metric-row"><span>Threshold</span><strong id="th-value">-</strong></div>
+        </div>
+        <div class="grid">
+          <div>
+            <div class="metric-row"><span>Precision</span><strong id="th-precision">-</strong></div>
+            <div class="metric-row"><span>Recall</span><strong id="th-recall">-</strong></div>
+            <div class="metric-row"><span>F1</span><strong id="th-f1">-</strong></div>
+            <div class="metric-row"><span>Flag rate</span><strong id="th-flagrate">-</strong></div>
+            <div class="metric-row"><span>Estimated savings</span><strong id="th-savings">-</strong></div>
+          </div>
+          <div class="cm-grid" id="th-cm"></div>
+        </div>
       </div>
     </div>
-  </div>
 
-  <div class="tab-panel" id="tab-audit">
-    <div class="panel">
-      <h2>Audit Trail (last predictions)</h2>
-      <pre class="audit" id="audit-log">Run an assessment to populate the audit trail…</pre>
+    <!-- ===== FAIRNESS ===== -->
+    <div class="tab-panel" id="tab-fairness">
+      <div class="panel">
+        <h2>Fairness Check — Segment-Level Analysis</h2>
+        <p id="fairness-methodology" style="color:var(--muted); font-size:0.85rem;">Loading…</p>
+        <div id="fairness-result"></div>
+      </div>
     </div>
-  </div>
 
-  <footer style="margin-top:48px; padding-top:24px; border-top:1px solid var(--border); text-align:center;">
-    <div style="font-size:0.8rem; color:var(--muted); margin-bottom:10px;">
-      Built with Flask · scikit-learn · Groq · Random Forest, 300 trees, trained on 6,000 synthetic merchant snapshots
+    <!-- ===== BUSINESS IMPACT ===== -->
+    <div class="tab-panel" id="tab-impact">
+      <div class="panel">
+        <h2>Business Impact Projection</h2>
+        <p style="color:var(--muted); font-size:0.85rem;">
+          Your test set proved this model catches real freeze risk on 1,500 accounts. This panel projects
+          that result to Razorpay's actual scale — <strong>you control the assumption</strong>, since the
+          real merchant base size and freeze-cost figures aren't public. This is honest extrapolation, not a claim.
+        </p>
+        <div class="top-controls" style="margin-top:16px;">
+          <label style="font-size:0.85rem; color:var(--muted);">Total merchant base:</label>
+          <input type="text" id="impact-merchant-base" value="100000" style="width:120px;">
+          <label style="font-size:0.85rem; color:var(--muted);">Review cycles per year:</label>
+          <input type="text" id="impact-cycles" value="12" style="width:60px;">
+          <button class="primary" id="impact-calc-btn">Project Impact</button>
+        </div>
+        <div id="impact-result" style="margin-top:20px;"></div>
+        <div class="panel" style="margin-top:16px; background:#0d1117;">
+          <h2 style="margin-top:0;">How this would actually integrate</h2>
+          <p style="font-size:0.85rem; line-height:1.6;">
+            This is a proposal, not a built integration: score the full merchant base as a nightly batch job
+            (reusing the exact <code>/api/batch-assess</code> endpoint already in this app), surface flagged
+            accounts to the compliance team's existing review queue, and re-run the What-If Simulator's logic
+            at KYC-document-update time so a merchant's risk score updates the moment they fix something —
+            closing the loop between "flagged" and "resolved" instead of leaving merchants guessing.
+          </p>
+        </div>
+      </div>
     </div>
-    <div style="font-size:0.78rem; color:var(--muted);">
-      Freeze-Risk Guardian — Razorpay AI Buildathon 2026, Track 02: AI Risk Manager
-      &nbsp;·&nbsp;
-      <a href="https://github.com/DakshrajKurki/Freeze-Risk-Guardian" target="_blank" style="color:var(--accent); text-decoration:none;">View on GitHub</a>
+
+    <!-- ===== AUDIT ===== -->
+    <div class="tab-panel" id="tab-audit">
+      <div class="panel">
+        <h2>Audit Trail (last predictions)</h2>
+        <pre class="audit" id="audit-log">Run an assessment to populate the audit trail…</pre>
+      </div>
     </div>
-  </footer>
+
+    <footer class="app-footer">
+      <div style="font-size:0.8rem; color:var(--muted); margin-bottom:10px;">
+        Built with Flask · scikit-learn · Groq · Random Forest, 300 trees, trained on 6,000 synthetic merchant snapshots
+      </div>
+      <div style="font-size:0.78rem; color:var(--muted);">
+        Freeze-Risk Guardian — Razorpay AI Buildathon 2026, Track 02: AI Risk Manager
+        &nbsp;·&nbsp;
+        <a href="https://github.com/DakshrajKurki/Freeze-Risk-Guardian" target="_blank" style="text-decoration:none;">View on GitHub</a>
+      </div>
+    </footer>
+  </main>
 </div>
 
-<!-- AI Compliance Assistant: Blade -->
-<button id="chat-fab" class="bouncing" title="Ask Blade">⚡</button>
-<div id="chat-teaser" style="display:none;">
-  <button class="teaser-close" id="teaser-close-btn">✕</button>
-  👋 Hey, I'm <strong>Blade</strong> — ask me anything about the model or a merchant's risk score.
-</div>
+<!-- Blade chat panel (opened from sidebar) -->
 <div id="chat-panel">
-  <div id="chat-header">⚡ Blade — AI Compliance Assistant</div>
+  <div id="chat-header"><span>⚡ Blade — AI Compliance Assistant</span><button id="chat-close-btn">✕</button></div>
   <div id="chat-messages"></div>
   <div id="chat-input-row">
     <input type="text" id="chat-input" placeholder="Ask Blade about the model or current merchant…">
@@ -340,7 +445,6 @@
   </div>
 </div>
 
-<script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
 let sampleMerchants = [];
@@ -348,25 +452,13 @@ let thresholdSweep = [];
 let lastAssessResult = null;
 let chatHistory = [];
 let lastBatchResults = null;
-
-const FEATURE_DEFS = [
-  {key:"kyc_completeness_score", label:"KYC Completeness Score", min:0, max:100, step:1, default:78},
-  {key:"kyc_doc_age_days", label:"KYC Doc Age (days)", min:0, max:1500, step:10, default:180},
-  {key:"days_since_onboarding", label:"Days Since Onboarding", min:5, max:3000, step:10, default:400},
-  {key:"monthly_txn_volume_inr", label:"Monthly Volume (₹)", min:5000, max:3000000, step:5000, default:300000},
-  {key:"volume_spike_ratio", label:"Volume Spike Ratio", min:0.5, max:6, step:0.1, default:1.0},
-  {key:"chargeback_ratio_pct", label:"Chargeback Ratio (%)", min:0, max:8, step:0.1, default:0.5},
-  {key:"refund_ratio_pct", label:"Refund Ratio (%)", min:0, max:25, step:0.5, default:2},
-  {key:"international_txn_share_pct", label:"International Txn Share (%)", min:0, max:100, step:1, default:10},
-  {key:"avg_ticket_size_inr", label:"Avg Ticket Size (₹)", min:50, max:20000, step:50, default:1000},
-  {key:"prior_risk_flags_count", label:"Prior Risk Flags", min:0, max:6, step:1, default:0},
-];
-
-// ---------- Tabs ----------
 let currentTabName = "Assess a Merchant";
-document.querySelectorAll('.tab-btn').forEach(btn => {
+let latestMetrics = null;
+
+// ---------- Sidebar nav ----------
+document.querySelectorAll('.nav-item').forEach(btn => {
   btn.addEventListener('click', () => {
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
     btn.classList.add('active');
     document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
@@ -378,10 +470,73 @@ function gradeColor(g) {
   return {A:"#3fb950", B:"#7ee787", C:"#d29922", D:"#f0883e", F:"#f85149"}[g] || "#8b949e";
 }
 
+// ---------- Dashboard rendering (donut, confusion matrix, drivers, stat cards) ----------
+function renderDashboard(m) {
+  document.getElementById("stat-auc").textContent = m.roc_auc;
+  document.getElementById("stat-auc-sub").textContent = m.roc_auc >= 0.8 ? "Strong Performance" : (m.roc_auc >= 0.6 ? "Fair Performance" : "Weak Performance");
+  document.getElementById("stat-precision").textContent = (m.precision * 100).toFixed(1) + "%";
+  document.getElementById("stat-recall").textContent = (m.recall * 100).toFixed(1) + "%";
+  document.getElementById("stat-savings").textContent = "₹" + m.estimated_cost_inr.estimated_savings_inr.toLocaleString("en-IN");
+  const capMatch = (m.deployed_policy || "").match(/top (\d+)%/i);
+  document.getElementById("stat-policy").textContent = capMatch ? ("Top " + capMatch[1] + "%") : "Custom";
+
+  // Donut: flagged vs not flagged, from real confusion matrix
+  const cm = m.confusion_matrix;
+  const flagged = cm.TP + cm.FP;
+  const notFlagged = cm.TN + cm.FN;
+  const total = flagged + notFlagged;
+  const flaggedPct = flagged / total;
+  const R = 52, C = 2 * Math.PI * R;
+  const dashFlagged = flaggedPct * C;
+  document.getElementById("donut-container").innerHTML = `
+    <div class="donut-wrap">
+      <svg width="130" height="130" viewBox="0 0 130 130">
+        <circle cx="65" cy="65" r="${R}" fill="none" stroke="#141b28" stroke-width="16"/>
+        <circle cx="65" cy="65" r="${R}" fill="none" stroke="var(--safe)" stroke-width="16"
+          stroke-dasharray="${C}" stroke-dashoffset="0" transform="rotate(-90 65 65)"/>
+        <circle cx="65" cy="65" r="${R}" fill="none" stroke="var(--danger)" stroke-width="16"
+          stroke-dasharray="${dashFlagged} ${C}" stroke-dashoffset="0" transform="rotate(-90 65 65)"/>
+        <text x="65" y="61" text-anchor="middle" font-size="20" font-weight="700" fill="var(--text)">${(flaggedPct*100).toFixed(0)}%</text>
+        <text x="65" y="78" text-anchor="middle" font-size="9" fill="var(--muted)">Flagged</text>
+      </svg>
+      <div class="donut-legend">
+        <div class="legend-row"><span class="legend-dot" style="background:var(--danger);"></span>High Risk (Flagged)<span class="legend-val">${(flaggedPct*100).toFixed(0)}% (${flagged})</span></div>
+        <div class="legend-row"><span class="legend-dot" style="background:var(--safe);"></span>Low Risk (Not Flagged)<span class="legend-val">${(100-flaggedPct*100).toFixed(0)}% (${notFlagged})</span></div>
+        <div style="font-size:0.7rem; color:var(--muted); margin-top:8px;">Policy: Flag top ${capMatch ? capMatch[1] : '?'}% riskiest merchants per cycle</div>
+      </div>
+    </div>`;
+
+  // Confusion matrix mini grid
+  document.getElementById("cm-container").innerHTML = `
+    <div class="cm-mini-grid">
+      <div></div><div class="cm-col-label">Pred: High Risk</div><div class="cm-col-label">Pred: Low Risk</div>
+      <div class="cm-axis-label">Actual</div>
+      <div class="cm-mini-cell cm-tp"><span class="cm-mini-val">${cm.TP}</span>TP</div>
+      <div class="cm-mini-cell cm-fn"><span class="cm-mini-val">${cm.FN}</span>FN</div>
+      <div></div>
+      <div class="cm-mini-cell cm-fp"><span class="cm-mini-val">${cm.FP}</span>FP</div>
+      <div class="cm-mini-cell cm-tn"><span class="cm-mini-val">${cm.TN}</span>TN</div>
+    </div>
+    <div style="font-size:0.72rem; color:var(--muted); margin-top:10px;">Total accounts: ${total.toLocaleString('en-IN')}</div>`;
+
+  // Top risk drivers: real global feature importances, unsigned (magnitude only, honestly labeled)
+  // Explicitly re-sort by importance value descending -- Flask's jsonify()
+  // alphabetizes dict keys during JSON serialization, so we can't trust
+  // object key order here even though the Python side sorted it correctly.
+  const entries = Object.entries(m.feature_importances).sort((a, b) => b[1] - a[1]).slice(0, 5);
+  const maxImp = Math.max(...entries.map(e => e[1]));
+  document.getElementById("drivers-container").innerHTML = entries.map(([feat, imp]) => `
+    <div class="driver-row">
+      <div class="driver-label-row"><span>${feat}</span><span>${(imp*100).toFixed(1)}%</span></div>
+      <div class="driver-bar-track"><div class="driver-bar-fill" style="width:${(imp/maxImp*100).toFixed(0)}%;"></div></div>
+    </div>`).join("") + `<div style="font-size:0.68rem; color:var(--muted); margin-top:6px;">Magnitude only — global importance has no direction; see per-merchant view in Assess tab for signed local factors.</div>`;
+}
+
 // ---------- Metrics / ROC ----------
 async function loadMetrics() {
   const res = await fetch("/api/metrics");
   const m = await res.json();
+  latestMetrics = m;
   const rows = [
     ["Deployed policy", m.deployed_policy],
     ["Decision threshold", m.decision_threshold],
@@ -394,6 +549,7 @@ async function loadMetrics() {
   document.getElementById("metrics").innerHTML = rows.map(
     ([k, v]) => `<div class="metric-row"><span>${k}</span><strong>${v}</strong></div>`
   ).join("");
+  renderDashboard(m);
 }
 
 async function loadRoc() {
@@ -584,6 +740,19 @@ document.getElementById("download-report-btn").addEventListener("click", () => {
 });
 
 // ---------- What-If Simulator ----------
+const FEATURE_DEFS = [
+  {key:"kyc_completeness_score", label:"KYC Completeness Score", min:0, max:100, step:1, default:78},
+  {key:"kyc_doc_age_days", label:"KYC Doc Age (days)", min:0, max:1500, step:10, default:180},
+  {key:"days_since_onboarding", label:"Days Since Onboarding", min:5, max:3000, step:10, default:400},
+  {key:"monthly_txn_volume_inr", label:"Monthly Volume (₹)", min:5000, max:3000000, step:5000, default:300000},
+  {key:"volume_spike_ratio", label:"Volume Spike Ratio", min:0.5, max:6, step:0.1, default:1.0},
+  {key:"chargeback_ratio_pct", label:"Chargeback Ratio (%)", min:0, max:8, step:0.1, default:0.5},
+  {key:"refund_ratio_pct", label:"Refund Ratio (%)", min:0, max:25, step:0.5, default:2},
+  {key:"international_txn_share_pct", label:"International Txn Share (%)", min:0, max:100, step:1, default:10},
+  {key:"avg_ticket_size_inr", label:"Avg Ticket Size (₹)", min:50, max:20000, step:50, default:1000},
+  {key:"prior_risk_flags_count", label:"Prior Risk Flags", min:0, max:6, step:1, default:0},
+];
+
 function buildSimulator() {
   const leftEl = document.getElementById("sim-sliders-left");
   const rightEl = document.getElementById("sim-sliders-right");
@@ -723,100 +892,6 @@ document.getElementById("export-batch-btn").addEventListener("click", () => {
   a.click();
 });
 
-// ---------- Chatbot ----------
-document.getElementById("chat-fab").addEventListener("click", () => {
-  document.getElementById("chat-panel").classList.toggle("open");
-  document.getElementById("chat-fab").classList.remove("bouncing");
-  hideTeaser();
-});
-
-function hideTeaser() {
-  const teaser = document.getElementById("chat-teaser");
-  teaser.style.display = "none";
-}
-
-document.getElementById("teaser-close-btn").addEventListener("click", (e) => {
-  e.stopPropagation();
-  hideTeaser();
-});
-
-document.getElementById("chat-teaser").addEventListener("click", () => {
-  document.getElementById("chat-panel").classList.add("open");
-  document.getElementById("chat-fab").classList.remove("bouncing");
-  hideTeaser();
-});
-
-// Show the teaser bubble shortly after load; auto-dismiss if ignored
-setTimeout(() => {
-  const teaser = document.getElementById("chat-teaser");
-  if (!document.getElementById("chat-panel").classList.contains("open")) {
-    teaser.style.display = "block";
-    setTimeout(hideTeaser, 8000); // auto-dismiss after 8s if untouched
-  }
-}, 1800);
-
-function appendChatMessage(role, text) {
-  const el = document.getElementById("chat-messages");
-  const div = document.createElement("div");
-  div.className = "chat-msg " + role;
-  div.innerHTML = `<span class="role-label">${role === 'user' ? 'You' : 'Assistant'}</span>${text}`;
-  el.appendChild(div);
-  el.scrollTop = el.scrollHeight;
-}
-
-async function sendChatMessage() {
-  const input = document.getElementById("chat-input");
-  const message = input.value.trim();
-  if (!message) return;
-  input.value = "";
-  appendChatMessage("user", message);
-  chatHistory.push({role: "user", content: message});
-  appendChatMessage("assistant", "…thinking…");
-
-  const currentMerchant = lastAssessResult ? {
-    merchant_id: lastAssessResult.merchant_id,
-    risk_score: lastAssessResult.risk_score,
-    flagged: lastAssessResult.flagged,
-    top_factors_summary: lastAssessResult.top_factors.map(f => f.feature).join(", "),
-  } : null;
-
-  const res = await fetch("/api/chat", {
-    method: "POST", headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({message, history: chatHistory.slice(0, -1), current_merchant: currentMerchant, current_tab: currentTabName}),
-  });
-  const data = await res.json();
-  document.getElementById("chat-messages").lastChild.remove();
-  appendChatMessage("assistant", data.reply);
-  chatHistory.push({role: "assistant", content: data.reply});
-}
-document.getElementById("chat-send-btn").addEventListener("click", sendChatMessage);
-document.getElementById("chat-input").addEventListener("keydown", (e) => { if (e.key === "Enter") sendChatMessage(); });
-
-// ---------- Business Impact ----------
-async function calcImpact() {
-  const base = parseFloat(document.getElementById("impact-merchant-base").value) || 0;
-  const cycles = parseFloat(document.getElementById("impact-cycles").value) || 1;
-  const resEl = document.getElementById("impact-result");
-  if (base <= 0) { resEl.innerHTML = "<em>Enter a merchant base greater than 0.</em>"; return; }
-
-  const res = await fetch("/api/metrics");
-  const m = await res.json();
-  const testSize = m.test_set_size;
-  const perAccountSavings = m.estimated_cost_inr.estimated_savings_inr / testSize;
-  const perCycleSavings = perAccountSavings * base;
-  const annualSavings = perCycleSavings * cycles;
-  const flaggedPerCycle = Math.round(base * 0.15); // deployed 15% capacity policy
-
-  resEl.innerHTML = `
-    <div class="metric-row"><span>Accounts reviewed per cycle (15% capacity)</span><strong>${flaggedPerCycle.toLocaleString('en-IN')}</strong></div>
-    <div class="metric-row"><span>Projected savings per review cycle</span><strong>₹${Math.round(perCycleSavings).toLocaleString('en-IN')}</strong></div>
-    <div class="metric-row"><span>Projected savings per year (${cycles} cycles)</span><strong style="color:var(--safe);">₹${Math.round(annualSavings).toLocaleString('en-IN')}</strong></div>
-    <div class="metric-row"><span>Basis</span><strong>Linear extrapolation from ${testSize.toLocaleString('en-IN')}-account test set</strong></div>
-    <div class="source-tag" style="display:block; margin-top:10px;">Assumptions you control: merchant base size and cycle frequency above. Everything else is derived directly from the held-out test set metrics — no invented numbers.</div>
-  `;
-}
-document.getElementById("impact-calc-btn").addEventListener("click", calcImpact);
-
 // ---------- Fairness Check ----------
 async function loadFairness() {
   const res = await fetch("/api/fairness-check");
@@ -854,13 +929,83 @@ async function loadFairness() {
   }).join("");
 }
 
+// ---------- Business Impact ----------
+async function calcImpact() {
+  const base = parseFloat(document.getElementById("impact-merchant-base").value) || 0;
+  const cycles = parseFloat(document.getElementById("impact-cycles").value) || 1;
+  const resEl = document.getElementById("impact-result");
+  if (base <= 0) { resEl.innerHTML = "<em>Enter a merchant base greater than 0.</em>"; return; }
+
+  const res = await fetch("/api/metrics");
+  const m = await res.json();
+  const testSize = m.test_set_size;
+  const perAccountSavings = m.estimated_cost_inr.estimated_savings_inr / testSize;
+  const perCycleSavings = perAccountSavings * base;
+  const annualSavings = perCycleSavings * cycles;
+  const flaggedPerCycle = Math.round(base * 0.15); // deployed 15% capacity policy
+
+  resEl.innerHTML = `
+    <div class="metric-row"><span>Accounts reviewed per cycle (15% capacity)</span><strong>${flaggedPerCycle.toLocaleString('en-IN')}</strong></div>
+    <div class="metric-row"><span>Projected savings per review cycle</span><strong>₹${Math.round(perCycleSavings).toLocaleString('en-IN')}</strong></div>
+    <div class="metric-row"><span>Projected savings per year (${cycles} cycles)</span><strong style="color:var(--safe);">₹${Math.round(annualSavings).toLocaleString('en-IN')}</strong></div>
+    <div class="metric-row"><span>Basis</span><strong>Linear extrapolation from ${testSize.toLocaleString('en-IN')}-account test set</strong></div>
+    <div class="source-tag" style="display:block; margin-top:10px;">Assumptions you control: merchant base size and cycle frequency above. Everything else is derived directly from the held-out test set metrics — no invented numbers.</div>
+  `;
+}
+document.getElementById("impact-calc-btn").addEventListener("click", calcImpact);
+
+// ---------- Chatbot (Blade) ----------
+document.getElementById("sidebar-chat-btn").addEventListener("click", () => {
+  document.getElementById("chat-panel").classList.add("open");
+});
+document.getElementById("chat-close-btn").addEventListener("click", () => {
+  document.getElementById("chat-panel").classList.remove("open");
+});
+
+function appendChatMessage(role, text) {
+  const el = document.getElementById("chat-messages");
+  const div = document.createElement("div");
+  div.className = "chat-msg " + role;
+  div.innerHTML = `<span class="role-label">${role === 'user' ? 'You' : 'Blade'}</span>${text}`;
+  el.appendChild(div);
+  el.scrollTop = el.scrollHeight;
+}
+
+async function sendChatMessage() {
+  const input = document.getElementById("chat-input");
+  const message = input.value.trim();
+  if (!message) return;
+  input.value = "";
+  appendChatMessage("user", message);
+  chatHistory.push({role: "user", content: message});
+  appendChatMessage("assistant", "…thinking…");
+
+  const currentMerchant = lastAssessResult ? {
+    merchant_id: lastAssessResult.merchant_id,
+    risk_score: lastAssessResult.risk_score,
+    flagged: lastAssessResult.flagged,
+    top_factors_summary: lastAssessResult.top_factors.map(f => f.feature).join(", "),
+  } : null;
+
+  const res = await fetch("/api/chat", {
+    method: "POST", headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({message, history: chatHistory.slice(0, -1), current_merchant: currentMerchant, current_tab: currentTabName}),
+  });
+  const data = await res.json();
+  document.getElementById("chat-messages").lastChild.remove();
+  appendChatMessage("assistant", data.reply);
+  chatHistory.push({role: "assistant", content: data.reply});
+}
+document.getElementById("chat-send-btn").addEventListener("click", sendChatMessage);
+document.getElementById("chat-input").addEventListener("keydown", (e) => { if (e.key === "Enter") sendChatMessage(); });
+
 // ---------- Init ----------
+document.getElementById("model-loaded-time").textContent = "Loaded " + new Date().toLocaleString();
 loadMetrics();
 loadRoc();
 loadThresholdSweep();
 buildSimulator();
 loadSampleMerchants().then(() => {
-  // Auto-populate every tab on load so nothing looks empty on first view
   assess();
   runSimulation();
   compareMerchants();
