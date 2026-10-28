@@ -34,7 +34,9 @@ ROC_PATH = os.path.join(BASE_DIR, "model", "roc_curve.json")
 SWEEP_PATH = os.path.join(BASE_DIR, "model", "threshold_sweep.json")
 FAIRNESS_PATH = os.path.join(BASE_DIR, "model", "fairness_check.json")
 DATA_PATH = os.path.join(BASE_DIR, "data", "merchant_freeze_risk_dataset.csv")
-AUDIT_LOG_PATH = os.path.join(BASE_DIR, "logs", "audit_log.jsonl")
+# Vercel's filesystem is read-only except /tmp
+LOG_DIR = "/tmp" if os.environ.get("VERCEL") else os.path.join(BASE_DIR, "logs")
+AUDIT_LOG_PATH = os.path.join(LOG_DIR, "audit_log.jsonl")
 
 app = Flask(__name__)
 
