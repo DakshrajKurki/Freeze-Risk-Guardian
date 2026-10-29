@@ -1,4 +1,3 @@
-[README-2.md](https://github.com/user-attachments/files/31869283/README-2.md)
 # Freeze-Risk Guardian
 
 **Razorpay AI Buildathon 2026 — Track 02: AI Risk Manager**
